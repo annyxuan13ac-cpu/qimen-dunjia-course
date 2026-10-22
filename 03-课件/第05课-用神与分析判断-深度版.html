@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L5</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">🔍</div>
+    <span class="tag">第5课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">用神与分析判断</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">竖看横看断吉凶——64用神·四盘叠合·月令定旺衰</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：判断方法论 → 第6课输入：格局判断的方法论基础</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">课程导览</span><h2>本课地图：从排好的盘到断出吉凶</h2><p><b class="lead">上节课我们学会了排盘——给时间出盘面。</b>但排好盘只是半成品，还要会判断。判断就是从盘面中读出吉凶、应期、趋势。这节课我们学判断的方法论：竖看横看+内外盘+月令旺相休囚。</p><p><b class="lead">奇门有64个用神，远超六爻6个和大六壬12个，因为四盘叠合信息量大。</b>但判断方法并不神秘——竖看宫内星干门神，横看宫与宫生克，内外盘定远近快慢，月令定力量强弱。AI今天扮演'判断侦探'，帮你从盘面找线索断吉凶。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">64用神</div><div class="gb">四大特征·远超六爻</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">竖看</div><div class="gb">宫内星干门神·主客</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">横看</div><div class="gb">宫宫生克·主客宫</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">内外盘</div><div class="gb">内近快·外远慢</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">月令</div><div class="gb">旺相有力·休囚无力</div></div></div><div class="sum-box">竖看横看+内外盘+月令=判断方法论三件套</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">开场钩子</span><div class="quote-big"><div class="qi">❝</div><div class="qt">六爻6个用神，大六壬12个，奇门64个——为什么奇门用神这么多？</div><div class="qs">用神数量之问</div></div><p><b class="lead">答案是四盘叠合。</b>同一个宫位有星干门神四个要素，九个宫就是36个信息位，再加上主客内外盘旺相休囚，信息量是单盘的好几倍。用神多不是坏事，而是精密的体现——多维交叉验证，判断更可靠。</p><p><b class="lead">但64个用神也带来挑战：</b>怎么从这么多信息中提取判断？答案就是竖看横看的方法论。竖看是微观——看单个宫内的星干门神；横看是宏观——看宫与宫的生克制化。微观宏观结合，才能断准吉凶。</p><div class="sum-box">64用神=四盘叠合多维信息，竖看微观横看宏观结合判断</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">KP1·64用神</span><h2>64个用神与四大特征</h2><p class="para-anchored"><b class="lead">奇门有64个用神，远超六爻6个和大六壬12个。</b>这64个用神有四大特征。多义性：同一用神在不同事项中含义不同——开门主事业，但问婚恋时开门可主开放不专一。多重性：同一事项用多个用神交叉验证——问财运看生门加日干加时干加月令，多管齐下。</p><p class="para-anchored">纲领性：日干=求测人（主），时干=求测之事（客），日时两干是判断的总纲领。系统性：天地人神四盘主客内外盘旺相休囚完整体系，不是单符号判断。多义性最易搞混——开门不总是吉，要看问什么事。</p><div class="callout blue"><div class="ci">⚠️</div><div class="cb">多义性最易错：开门不总是吉！问事业吉，问婚恋可能主'开放不专一'。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>特征</th><th>含义</th><th>示例</th></tr><tr><td>多义性</td><td>同用神不同事不同义</td><td>开门问事业吉/问婚恋不专一</td></tr><tr><td>多重性</td><td>同事多用神交叉验证</td><td>问财运看生门+日干+时干+月令</td></tr><tr><td>纲领性</td><td>日干主时干客</td><td>日干=求测人，时干=求测之事</td></tr><tr><td>系统性</td><td>四盘完整体系</td><td>星干门神+主客+内外+旺相休囚</td></tr></table></div><div class="sum-box">四大特征：多义性·多重性·纲领性·系统性——日干主时干客是总纲</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">KP2·竖看</span><h2>竖看（纵向分析）：一宫之中星干门神</h2><p class="para-anchored"><b class="lead">竖看是微观分析，看单个宫位内的四个要素。</b>天盘星主天时——该宫天盘星的吉凶和旺相休囚。地盘干主地利——该宫地盘干的五行和与其他干的关系。八门主人和——该宫八门的吉凶和门宫生克。八神主神助——该宫八神的吉凶。</p><p class="para-anchored"><b class="lead">主客关系：</b>天盘为客（动方），地盘为主（静方）。天盘星克地盘星=客克主，天盘星生地盘星=客生主。竖看口诀：一宫之中，星干门神，天客地主。以坎1宫为例：天蓬星+戊+休门+值符=天时凶地利中人和吉神助吉，综合看吉凶参半偏吉。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">竖看口诀：一宫之中，星干门神，天客地主。四要素综合看吉凶。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>要素</th><th>所主</th><th>坎1宫示例</th></tr><tr><td>天盘星</td><td>天时</td><td>天蓬（大凶）</td></tr><tr><td>地盘干</td><td>地利</td><td>戊（中央土）</td></tr><tr><td>八门</td><td>人和</td><td>休门（大吉）</td></tr><tr><td>八神</td><td>神助</td><td>值符（大吉）</td></tr></table></div><div class="sum-box">竖看=宫内四要素：星主天时干主地利门主人和神主神助，天盘客地盘主</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">KP3·横看</span><h2>横看（横向分析）：宫与宫生克制化</h2><p class="para-anchored"><b class="lead">横看是宏观分析，看宫与宫之间的生克制化。</b>四种主要关系：用神宫与日干宫生克——用神宫生日干宫=得力，克日干宫=受阻。用神宫与时干宫生克——用神宫生时干宫=事顺，克时干宫=事逆。</p><p class="para-anchored"><b class="lead">主客宫生克——天盘宫（客）与地盘宫（主）的生克。</b>同宫天地盘干生克——天盘干克地盘干=客克主，天盘干生地盘干=客生主。横看口诀：宫宫生克，主客分明。竖看是宫内要素的关系，横看是宫与宫的关系，两者结合才能断准。</p><div class="tbl-wrap"><table class="dt"><tr><th>横看关系</th><th>条件</th><th>判断</th></tr><tr><td>用神宫与日干宫</td><td>生</td><td>得力</td></tr><tr><td>用神宫与日干宫</td><td>克</td><td>受阻</td></tr><tr><td>用神宫与时干宫</td><td>生</td><td>事顺</td></tr><tr><td>用神宫与时干宫</td><td>克</td><td>事逆</td></tr><tr><td>主客宫</td><td>天盘生地盘</td><td>客生主吉</td></tr><tr><td>同宫天地盘干</td><td>天干克地干</td><td>客克主凶</td></tr></table></div><div class="sum-box">横看口诀：宫宫生克主客分明——竖看宫内横看宫间，两者结合</div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">KP4·内外盘</span><h2>内外盘：内主近快外主远慢</h2><div class="tbl-wrap"><table class="dt"><tr><th>盘类</th><th>宫位</th><th>主</th></tr><tr><td>内盘</td><td>坎1震3巽4离9</td><td>近·快·内部</td></tr><tr><td>外盘</td><td>乾6坤2艮8兑7</td><td>远·慢·外部</td></tr></table></div><p><b class="lead">九宫分内外盘。</b>内盘是坎震巽离即1/3/4/9四正宫，主近、主快、主内部。外盘是乾坤艮兑即6/2/8/7四维宫，主远、主慢、主外部。</p><p><b class="lead">判断方法：</b>用神落内盘应期近来得快，落外盘应期远来得慢。比如生门落坎1宫（内盘），求财应期近来得快；生门落乾6宫（外盘），求财应期远来得慢。中5宫属内外盘之间，天禽星寄坤2宫时按外盘论。</p></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">KP5·月令</span><h2>月令旺相休囚：月令决定一切力量强弱</h2><p class="para-anchored"><b class="lead">月令是判断用神力量强弱的核心依据。</b>用神在月令旺相→有力能成事，休囚→无力难成事。旺相：用神五行与月令同行或月令生用神。休囚：月令克用神或用神生月令（泄气）。</p><p class="para-anchored"><b class="lead">以生门为例：</b>生门属土。春季木旺，木克土，生门在春季为囚→求财难成。夏季火旺，火生土，生门在夏季为相→求财可成。秋季金旺，土生金泄气，生门在秋季为休→求财费力。冬季水旺，土克水，生门在冬季为旺→求财有力。同月不同令，力量天差地别。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">月令是力量之源！生门属土，冬季土克水为旺求财有力，春季木克土为囚求财难成。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>月令</th><th>五行</th><th>生门(土)状态</th><th>求财</th></tr><tr><td>春季</td><td>木旺</td><td>囚(木克土)</td><td>难成</td></tr><tr><td>夏季</td><td>火旺</td><td>相(火生土)</td><td>可成</td></tr><tr><td>秋季</td><td>金旺</td><td>休(土生金泄)</td><td>费力</td></tr><tr><td>冬季</td><td>水旺</td><td>旺(土克水)</td><td>有力</td></tr></table></div><div class="sum-box">月令定旺衰：旺相有力能成事，休囚无力难成事</div></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">AI融入·侦探</span><h2>AI判断侦探Prompt模板</h2><p><b class="lead">以下是本课AI判断侦探的完整Prompt。</b>给AI一个已排好的盘面和求测事项，AI按竖看横看+内外盘+月令五步判断，输出吉凶判断加依据加应期远近。</p><p><b class="lead">使用建议：</b>先自己按方法论判断，再用AI侦探验证。如果两者结论不同，先检查自己是否在用神选择或主客方向上出错，确认自己无误后再判AI错。判断是奇门最需要经验的环节——方法论可以教，但断准吉凶需要大量实践。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲判断侦探。用户给你一个已排好的盘面和求测事项，你按以下方法判断：
+
+1.定用神：根据事项选对应用神（问事业看开门/问财运看生门/问健康看休门/问出行看伤门）
+2.竖看：用神所在宫的星干门神四要素+主客（天盘客地盘主）
+3.横看：用神宫与日干宫/时干宫生克+主客宫生克+同宫天地盘干生克
+4.内外盘：用神落内盘(坎震巽离)应近快，外盘(乾坤艮兑)应远慢
+5.月令：用神在月令旺相有力成事，休囚无力难成
+
+规则：
+- 日干=求测人(主)，时干=求测之事(客)，不要搞反
+- 内盘主近快外盘主远慢，不要搞反
+- 多义性：开门不总是吉，要看问什么事
+- 月令休囚时用神无力，不能断成事
+
+输出：吉凶判断+依据+应期远近。
+不确定时标注"待查"而非编造。</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">自测·判断方法</span><h2>判断方法论自测（5题）</h2><div class='quiz-q'><p><b>Q1. 日干和时干分别代表什么？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 日干客时干主</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 日干主时干客</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 都是主</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 都是客</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 日干=求测人(主)，时干=求测之事(客)。这是纲领性特征，日时两干是判断总纲。</div></div><div class='quiz-q'><p><b>Q2. 用神落内盘主什么？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,1)'>A. 远慢</div><div class='quiz-opt' onclick='reveal(this,1,1,1)'>B. 近快</div><div class='quiz-opt' onclick='reveal(this,1,2,1)'>C. 中平</div><div class='quiz-opt' onclick='reveal(this,1,3,1)'>D. 无法判断</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 内盘(坎震巽离)主近快内部，外盘(乾坤艮兑)主远慢外部。用神落内盘应期近来得快。</div></div><div class='quiz-q'><p><b>Q3. 生门属土落春季木令，是何状态？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,3)'>A. 旺</div><div class='quiz-opt' onclick='reveal(this,2,1,3)'>B. 相</div><div class='quiz-opt' onclick='reveal(this,2,2,3)'>C. 休</div><div class='quiz-opt' onclick='reveal(this,2,3,3)'>D. 囚</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 春季木旺，木克土=克我之宫=囚。生门在春季囚→求财难成。冬季水旺土克水=旺→求财有力。</div></div><div class='quiz-q'><p><b>Q4. 竖看和横看的区别是？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,0)'>A. 竖看宫内横看宫间</div><div class='quiz-opt' onclick='reveal(this,3,1,0)'>B. 竖看宫间横看宫内</div><div class='quiz-opt' onclick='reveal(this,3,2,0)'>C. 两者相同</div><div class='quiz-opt' onclick='reveal(this,3,3,0)'>D. 竖看吉凶横看应期</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 竖看是宫内要素(星干门神)的关系，横看是宫与宫的生克制化。微观宏观结合。</div></div><div class='quiz-q'><p><b>Q5. 开门问婚恋，可能主什么？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 大吉</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 开放不专一</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 死亡</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 无法判断</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 多义性：开门主事业吉，但问婚恋时开门可主'开放不专一'。同用神不同事不同义。</div></div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">找AI的错</span><h2>找AI的错：判断结果3处错误</h2><div class="case-card"><div class="case-head">AI侦探的判断结果（埋了3处错）</div><p class="case-body">AI侦探输出了一份判断结果，但里面故意埋了三处错误。请你用刚学的判断方法论找出它们——这是本课的'找AI的错'环节，训练你对AI判断结果的鉴别力。</p><p class="case-body">错误1：判断中说日干为客时干为主——错！日干=求测人(主)，时干=求测之事(客)，AI搞反了。错误2：判断中说用神落外盘主快——错！外盘主远慢，内盘才主近快。错误3：判断中说月令休囚时用神能成事——错！休囚无力难成事，旺相才有力能成。</p><div class="case-metrics"><div class="cm"><div class="cm-v">3</div><div class="cm-l">处错误</div></div><div class="cm"><div class="cm-v">100%</div><div class="cm-l">应检出率</div></div></div></div><p class="hl">3处错：日干为客(应主)、外盘主快(应远慢)、休囚能成事(应难成)</p></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">本课数据</span><h2>判断方法论数据总览</h2><p><b class="lead">判断是奇门最需要经验的环节——方法论可以教，但断准吉凶需要大量实践。</b>本课建立的方法论框架，是后续实践的基础。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">64</div><div class="kl">用神</div><div class="kd">远超六爻6大六壬12</div></div><div class="kpi blue"><div class="kv">4</div><div class="kl">竖看要素</div><div class="kd">星干门神</div></div><div class="kpi blue"><div class="kv">4</div><div class="kl">横看关系</div><div class="kd">宫宫生克4种</div></div><div class="kpi blue"><div class="kv">2</div><div class="kl">内外盘</div><div class="kd">内近快外远慢</div></div><div class="kpi blue"><div class="kv">4</div><div class="kl">旺相休囚</div><div class="kd">月令定强弱</div></div></div><div class="sum-box">64用神+4竖看+4横看+2内外盘+4旺衰=完整判断体系</div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">判断流程</span><h2>判断五步流程：从盘面到吉凶</h2><p><b class="lead">判断是从已排好的盘面中读出吉凶的过程。</b>五步流程：定用神→竖看→横看→内外盘→月令。每步有明确任务，综合五步才能断准。</p><div class="tl-v"><div class="tl-item"><div class="tt"><span class="tm">Step1</span>定用神</div><div class="td">根据事项选对应用神</div></div><div class="tl-item"><div class="tt"><span class="tm">Step2</span>竖看</div><div class="td">用神宫内星干门神+主客</div></div><div class="tl-item"><div class="tt"><span class="tm">Step3</span>横看</div><div class="td">宫宫生克+主客宫生克</div></div><div class="tl-item"><div class="tt"><span class="tm">Step4</span>内外盘</div><div class="td">内近快外远慢定应期</div></div><div class="tl-item"><div class="tt"><span class="tm">Step5</span>月令</div><div class="td">旺相有力休囚无力</div></div></div><div class="sum-box">五步：定用神→竖看→横看→内外盘→月令，综合判断</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">补充·竖看实例</span><h2>竖看实例：坎1宫完整分析</h2><p class="para-anchored"><b class="lead">以坎1宫为例完整竖看。</b>天盘星天蓬属水大凶主胆大妄为——天时凶。地盘干戊属中央土——地利中。八门休门属水大吉主休息安养——人和吉。八神值符属土阳大吉主首领——神助吉。</p><p class="para-anchored"><b class="lead">主客关系：</b>天盘星为客（动方），地盘干为主（静方）。天蓬水与戊土，土克水=主克客=主人制客。综合四要素：天时凶+地利中+人和吉+神助吉=吉凶参半偏吉，但主克客意味着求测方（主）有一定控制力。这就是竖看的完整输出——不是单看一个符号，而是四要素综合。</p><div class="tbl-wrap"><table class="dt"><tr><th>要素</th><th>坎1宫</th><th>吉凶</th><th>所主</th></tr><tr><td>天盘星</td><td>天蓬水</td><td>大凶</td><td>天时</td></tr><tr><td>地盘干</td><td>戊土</td><td>中</td><td>地利</td></tr><tr><td>八门</td><td>休门水</td><td>大吉</td><td>人和</td></tr><tr><td>八神</td><td>值符土</td><td>大吉</td><td>神助</td></tr></table></div><div class="sum-box">坎1宫竖看：天蓬凶+戊中+休门吉+值符吉=吉凶参半偏吉，主克客</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">补充·月令实例</span><h2>月令实例：生门四季旺衰对比</h2><p class="para-anchored"><b class="lead">生门属土，主财运。</b>四季月令不同，生门力量天差地别。春季木令：木克土=克我之宫=囚，生门无力，求财难成。夏季火令：火生土=生我之宫=相（注意这里用星的旺相休囚废，与九星落宫的判定略有不同），生门有力，求财可成。</p><p class="para-anchored"><b class="lead">秋季金令：</b>土生金=我生之宫=休（泄气），生门费力，求财辛苦。冬季水令：土克水=我克之宫=旺，生门最有力，求财可成。所以同样是生门落同宫，冬求财和春求财结果可能相反——月令是力量之源，不可不查。</p><div class="tbl-wrap"><table class="dt"><tr><th>季节</th><th>月令</th><th>生门(土)</th><th>求财</th></tr><tr><td>春</td><td>木旺</td><td>囚</td><td>难成</td></tr><tr><td>夏</td><td>火旺</td><td>相</td><td>可成</td></tr><tr><td>秋</td><td>金旺</td><td>休</td><td>费力</td></tr><tr><td>冬</td><td>水旺</td><td>旺</td><td>有力</td></tr></table></div><div class="sum-box">同生门同宫，冬求财有力春求财难成——月令是力量之源</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">课堂讨论</span><h2>讨论：星吉门凶如何取舍？</h2><p>实际判断中常遇到矛盾：用神宫天盘星吉但八门凶，或星凶门吉。这时如何取舍？一般原则：人和（门）重于天时（星），因为奇门偏重人为因素。但也要看具体事项——问天灾看星重，问人事看门重。</p><p>另一种思路是看用神本身是什么：如果用神是星（如天心主医），星重于门；如果用神是门（如生门主财），门重于星。讨论这个问题的意义在于——判断不能机械套规则，要根据事项灵活取舍。这也是奇门判断需要经验的原因。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">星吉门凶时，问事业和问天灾如何分别取舍？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">用神是星时和用神是门时，权重有何不同？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">四要素矛盾时，有没有统一的优先级规则？</div></div></div><p class="hl">星吉门凶取舍：一般门重于星，但看事项——问天灾星重问人事门重</p></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">补充·横看实例</span><h2>横看实例：用神宫与日干宫生克</h2><p class="para-anchored"><b class="lead">做一个横看实例。</b>假设问求财，用神是生门，生门落巽4宫。日干落坤2宫。巽4属木，坤2属土，木克土=用神宫克日干宫=受阻。这意味着求财过程中求测人会受到阻碍。</p><p class="para-anchored"><b class="lead">再看用神宫与时干宫：</b>时干落乾6宫，巽4木与乾6金，金克木=时干宫克用神宫=事逆。综合看：用神宫克日干宫受阻+时干宫克用神宫事逆=求财不顺。如果反过来用神宫生日干宫+用神宫生时干宫=得力+事顺=求财可成。横看就是把宫与宫的生克转化为判断依据。</p><div class="tbl-wrap"><table class="dt"><tr><th>横看</th><th>宫位</th><th>五行</th><th>关系</th><th>判断</th></tr><tr><td>用神宫</td><td>巽4</td><td>木</td><td>—</td><td>—</td></tr><tr><td>日干宫</td><td>坤2</td><td>土</td><td>木克土</td><td>受阻</td></tr><tr><td>时干宫</td><td>乾6</td><td>金</td><td>金克木</td><td>事逆</td></tr></table></div><div class="sum-box">用神宫克日干宫=受阻，时干宫克用神宫=事逆→求财不顺</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">补充·内外盘实例</span><h2>内外盘实例：应期远近判断</h2><p class="para-anchored"><b class="lead">做一个内外盘实例。</b>假设问求财，生门落坎1宫。坎1属内盘（坎震巽离四正宫），内盘主近主快，所以求财应期近来得快——可能几天到几周内见效。</p><p class="para-anchored">如果生门落乾6宫，乾6属外盘（乾坤艮兑四维宫），外盘主远主慢，所以求财应期远来得慢——可能几个月到半年才见效。同样是生门求财，落内盘外盘的应期判断完全不同。这就是内外盘的实用价值——不只断吉凶，还断何时应验。结合月令还可以进一步缩小应期范围。</p><div class="tbl-wrap"><table class="dt"><tr><th>生门落宫</th><th>盘类</th><th>应期</th><th>来得</th></tr><tr><td>坎1宫</td><td>内盘</td><td>近</td><td>快</td></tr><tr><td>乾6宫</td><td>外盘</td><td>远</td><td>慢</td></tr><tr><td>震3宫</td><td>内盘</td><td>近</td><td>快</td></tr><tr><td>坤2宫</td><td>外盘</td><td>远</td><td>慢</td></tr></table></div><div class="sum-box">生门落内盘应期近来得快，落外盘应期远来得慢——不只断吉凶还断何时</div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">补充·综合判断</span><h2>综合判断演示：五步合一断求财</h2><p class="para-anchored"><b class="lead">把五步合起来做一个综合判断演示。</b>问求财，生门落坎1宫，日干落震3宫，时干落巽4宫，月令冬季。Step1定用神：生门。Step2竖看：坎1宫天蓬凶+戊中+休门吉+值符吉=偏吉。</p><p class="para-anchored"><b class="lead">Step3横看：</b>生门坎1水生日干震3木=得力，生门坎1水生时干巽4木=事顺。Step4内外盘：坎1内盘主近快。Step5月令：冬季水旺生门土克水为旺有力。综合：偏吉+得力+事顺+近快+有力=求财可成应期近来得快。这就是五步合一的完整判断流程。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">综合：偏吉+得力+事顺+近快+有力=求财可成应期近来得快。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>步骤</th><th>内容</th><th>结果</th></tr><tr><td>Step1 定用神</td><td>生门</td><td>—</td></tr><tr><td>Step2 竖看</td><td>坎1宫四要素</td><td>偏吉</td></tr><tr><td>Step3 横看</td><td>生门水生日干木</td><td>得力事顺</td></tr><tr><td>Step4 内外盘</td><td>坎1内盘</td><td>近快</td></tr><tr><td>Step5 月令</td><td>冬水旺土克水</td><td>旺有力</td></tr></table></div><div class="sum-box">五步合一：偏吉+得力+事顺+近快+有力=求财可成应期近</div></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">补充·判断的art</span><h2>为什么判断需要经验而不只靠方法论</h2><p class="para-anchored"><b class="lead">为什么判断需要经验而不只靠方法论？</b>三个原因。第一，多义性：同一用神不同事不同义，选对用神需要经验。第二，矛盾取舍：星吉门凶时如何取舍，要看事项灵活判断。第三，应期细化：内外盘定远近但具体何时应验，需要结合月令和实测经验。</p><p class="para-anchored"><b class="lead">方法论是骨架，经验是血肉。</b>初学者先严格按五步走不要跳步，熟练后才能灵活取舍。AI侦探能帮你验证判断，但最终判断权在你——AI是参谋不是决策者。多排多断多验证，才是提升判断力的正道。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">方法论是骨架经验是血肉。AI是参谋不是决策者，多排多断多验证才是正道。</div></div><div class="sum-box">方法论可教经验需练——AI是参谋非决策者，多排多断多验证</div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">本课总结</span><h2>总结：判断方法论已建立</h2><ul class="steps-list"><li>64用神四大特征：多义性·多重性·纲领性·系统性（日干主时干客）</li><li>竖看：宫内星干门神四要素+主客（天客地主）</li><li>横看：宫宫生克四种关系+主客宫生克</li><li>内外盘：内盘坎震巽离主近快，外盘乾坤艮兑主远慢</li><li>月令：旺相有力能成事，休囚无力难成事</li><li>判断五步：定用神→竖看→横看→内外盘→月令</li></ul><div class="sum-box">核心口诀：日干主时干客，竖看星干门神，横看宫宫生克，月令定旺衰</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第6课《格局判断》——本课方法论基础上的格局分析</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>产出：判断方法论 → 第6课输入：格局判断的方法论基础</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位同学好，欢迎来到奇门遁甲AI+融合版课程的第五课。今天这节课的主题是\"用神与分析判断——竖看横看断吉凶\"。上节课我们学会了排盘——给时间出盘面。但排好盘只是半成品，还要会判断。判断就是从盘面中读出吉凶、应期、趋势。这节课的AI角色是\"判断侦探\"，帮你从盘面找线索断吉凶。本课产出判断方法论，作为第六课格局判断的方法论基础。开始。"}, {"idx": 1, "title": "本课地图", "text": "先看本课地图。奇门有64个用神，远超六爻6个和大六壬12个，因为四盘叠合信息量大。但判断方法并不神秘——竖看宫内星干门神，横看宫与宫生克，内外盘定远近快慢，月令定力量强弱。我们沿五步走：64用神四大特征、竖看法、横看法、内外盘、月令旺相休囚。AI今天扮演判断侦探帮你从盘面找线索，但判断最需要经验——方法论可以教，断准吉凶需要大量实践。课末照例找AI埋的三处错。"}, {"idx": 2, "title": "开场钩子", "text": "先抛个问题：六爻6个用神，大六壬12个，奇门64个——为什么奇门用神这么多？答案是四盘叠合。同一个宫位有星干门神四个要素，九个宫就是36个信息位，再加上主客内外盘旺相休囚，信息量是单盘的好几倍。用神多不是坏事而是精密的体现——多维交叉验证判断更可靠。但64个用神也带来挑战：怎么从这么多信息中提取判断？答案就是竖看横看的方法论。竖看是微观看单宫内星干门神，横看是宏观看宫与宫生克。微观宏观结合才能断准。"}, {"idx": 3, "title": "64用神与四大特征", "text": "进入第一站，64用神与四大特征。多义性：同一用神在不同事项中含义不同——开门主事业，但问婚恋时开门可主开放不专一。多重性：同一事项用多个用神交叉验证——问财运看生门加日干加时干加月令多管齐下。纲领性：日干等于求测人是主，时干等于求测之事是客，日时两干是判断的总纲领。系统性：天地人神四盘主客内外盘旺相休囚完整体系，不是单符号判断。多义性最易搞混——开门不总是吉要看问什么事，这个错误一定要避免。"}, {"idx": 4, "title": "竖看纵向分析", "text": "进入第二站，竖看。竖看是微观分析，看单个宫位内的四个要素。天盘星主天时，地盘干主地利，八门主人和，八神主神助。主客关系：天盘为客是动方，地盘为主是静方。天盘星克地盘星是客克主，天盘星生地盘星是客生主。竖看口诀：一宫之中星干门神天客地主。以坎1宫为例：天蓬星加戊加休门加值符等于天时凶地利中人和吉神助吉，综合看吉凶参半偏吉。竖看不是单看一个符号，而是四要素综合判断。"}, {"idx": 5, "title": "横看横向分析", "text": "进入第三站，横看。横看是宏观分析，看宫与宫之间的生克制化。四种主要关系：用神宫与日干宫生克，用神宫生日干宫为得力，克日干宫为受阻。用神宫与时干宫生克，用神宫生时干宫为事顺，克时干宫为事逆。主客宫生克，天盘宫客与地盘宫主的生克。同宫天地盘干生克，天盘干克地盘干为客克主，天盘干生地盘干为客生主。横看口诀：宫宫生克主客分明。竖看是宫内要素的关系，横看是宫与宫的关系，两者结合才能断准。"}, {"idx": 6, "title": "内外盘", "text": "进入第四站，内外盘。九宫分内外盘。内盘是坎震巽离即1/3/4/9四正宫，主近、主快、主内部。外盘是乾坤艮兑即6/2/8/7四维宫，主远、主慢、主外部。判断方法：用神落内盘应期近来得快，落外盘应期远来得慢。比如生门落坎1宫内盘，求财应期近来得快；生门落乾6宫外盘，求财应期远来得慢。中5宫属内外盘之间，天禽星寄坤2宫时按外盘论。内盘主近快外盘主远慢，这个方向不要搞反，搞反了应期判断完全相反。"}, {"idx": 7, "title": "月令旺相休囚", "text": "进入第五站，月令。月令是判断用神力量强弱的核心依据。用神在月令旺相则有力能成事，休囚则无力难成事。旺相是用神五行与月令同行或月令生用神。休囚是月令克用神或用神生月令也就是泄气。以生门为例：生门属土。春季木旺木克土生门在春季为囚求财难成。夏季火旺火生土生门在夏季为相求财可成。秋季金旺土生金泄气生门在秋季为休求财费力。冬季水旺土克水生门在冬季为旺求财有力。同月不同令力量天差地别，月令是力量之源不可不查。"}, {"idx": 8, "title": "AI判断侦探Prompt", "text": "以下是本课AI判断侦探的完整Prompt。给AI一个已排好的盘面和求测事项，AI按定用神、竖看、横看、内外盘、月令五步判断，输出吉凶判断加依据加应期远近。Prompt中明确列出了关键规则：日干主时干客、内盘近快外盘远慢、多义性、月令休囚无力等，并要求不确定时标注待查而非编造。使用建议：先自己按方法论判断，再用AI侦探验证。判断是奇门最需要经验的环节，方法论可以教但断准吉凶需要大量实践。"}, {"idx": 9, "title": "判断方法论自测", "text": "现在做五道自测题。第一题日干和时干分别代表什么？答案日干主时干客，日干是求测人时干是求测之事。第二题用神落内盘主什么？答案近快，内盘坎震巽离主近快内部。第三题生门属土落春季木令是何状态？答案囚，春季木旺木克土为囚求财难成。第四题竖看和横看的区别？答案竖看宫内横看宫间，竖看是宫内要素横看是宫与宫。第五题开门问婚恋可能主什么？答案开放不专一，多义性开门问事业吉但问婚恋可能不专一。五题全对的同学举手。"}, {"idx": 10, "title": "找AI的错", "text": "进入找AI的错环节。AI侦探输出了一份判断结果，但里面故意埋了三处错误。第一处：判断中说日干为客时干为主——错！日干是求测人是主，时干是求测之事是客，AI搞反了。第二处：判断中说用神落外盘主快——错！外盘主远慢，内盘才主近快。第三处：判断中说月令休囚时用神能成事——错！休囚无力难成事，旺相才有力能成。三处错误分别对应主客搞反、内外盘搞反、旺衰结论搞反三类典型判断错误。AI判断在这三个环节最容易出错，你必须有能力鉴别。"}, {"idx": 11, "title": "判断方法论数据总览", "text": "来看本课数据总览。64个用神远超六爻6个大六壬12个，4个竖看要素星干门神，4种横看关系宫宫生克，2类内外盘内近快外远慢，4种旺相休囚月令定强弱。64用神加4竖看加4横看加2内外盘加4旺衰等于完整判断体系。判断是奇门最需要经验的环节——方法论可以教，但断准吉凶需要大量实践。本课建立的方法论框架是后续实践的基础，后面就是在实际盘面上反复练习这套方法论。"}, {"idx": 12, "title": "判断五步流程", "text": "判断是从已排好的盘面中读出吉凶的过程，五步流程。Step1定用神，根据事项选对应用神。Step2竖看，用神宫内星干门神加主客。Step3横看，宫宫生克加主客宫生克。Step4内外盘，内近快外远慢定应期。Step5月令，旺相有力休囚无力。每步有明确任务，综合五步才能断准。建议每步都留下判断依据，最后综合时才好回溯。判断不是拍脑袋，是五步方法论的系统推演。"}, {"idx": 13, "title": "竖看实例", "text": "以坎1宫为例完整竖看。天盘星天蓬属水大凶主胆大妄为——天时凶。地盘干戊属中央土——地利中。八门休门属水大吉主休息安养——人和吉。八神值符属土阳大吉主首领——神助吉。主客关系：天盘星为客动方，地盘干为主静方。天蓬水与戊土，土克水是主克客，主人制客。综合四要素：天时凶加地利中加人和吉加神助吉等于吉凶参半偏吉，但主克客意味着求测方有一定控制力。这就是竖看的完整输出——不是单看一个符号而是四要素综合。"}, {"idx": 14, "title": "月令实例", "text": "再看月令实例，生门四季旺衰对比。生门属土主财运。春季木令木克土是克我之宫为囚，生门无力求财难成。夏季火令火生土是生我之宫为相，生门有力求财可成。秋季金令土生金是我生之宫为休也就是泄气，生门费力求财辛苦。冬季水令土克水是我克之宫为旺，生门最有力求财可成。所以同样是生门落同宫，冬求财和春求财结果可能相反——月令是力量之源不可不查。这个实例说明月令对判断的影响有多大。"}, {"idx": 15, "title": "讨论——星吉门凶如何取舍", "text": "讨论题：星吉门凶如何取舍？实际判断中常遇到矛盾：用神宫天盘星吉但八门凶，或星凶门吉。这时如何取舍？一般原则：人和也就是门重于天时也就是星，因为奇门偏重人为因素。但也要看具体事项——问天灾看星重，问人事看门重。另一种思路是看用神本身是什么：如果用神是星如天心主医，星重于门；如果用神是门如生门主财，门重于星。判断不能机械套规则，要根据事项灵活取舍。这也是奇门判断需要经验的原因。"}, {"idx": 16, "title": "横看实例——用神宫与日干宫", "text": "做一个横看实例。假设问求财，用神是生门，生门落巽4宫。日干落坤2宫。巽4属木，坤2属土，木克土=用神宫克日干宫=受阻。这意味着求财过程中求测人会受到阻碍。再看用神宫与时干宫：时干落乾6宫，巽4木与乾6金，金克木=时干宫克用神宫=事逆。综合看：用神宫克日干宫受阻+时干宫克用神宫事逆=求财不顺。如果反过来用神宫生日干宫+用神宫生时干宫=得力+事顺=求财可成。横看就是这样把宫与宫的生克转化为判断依据。"}, {"idx": 17, "title": "内外盘实例——应期判断", "text": "做一个内外盘实例。假设问求财，生门落坎1宫。坎1属内盘（坎震巽离四正宫），内盘主近主快，所以求财应期近来得快——可能几天到几周内见效。如果生门落乾6宫，乾6属外盘（乾坤艮兑四维宫），外盘主远主慢，所以求财应期远来得慢——可能几个月到半年才见效。同样是生门求财，落内盘外盘的应期判断完全不同。这就是内外盘的实用价值——不只断吉凶，还断何时应验。结合月令还可以进一步缩小应期范围。"}, {"idx": 18, "title": "综合判断——五步合一", "text": "把五步合起来做一个综合判断演示。问求财，生门落坎1宫，日干落震3宫，时干落巽4宫，月令冬季。Step1定用神：生门。Step2竖看：坎1宫天蓬凶加戊中加休门吉加值符吉=偏吉。Step3横看：生门坎1水生日干震3木=得力，生门坎1水生时干巽4木=事顺。Step4内外盘：坎1内盘主近快。Step5月令：冬季水旺生门土克水为旺有力。综合：偏吉加得力加事顺加近快加有力=求财可成应期近来得快。这就是五步合一的完整判断。"}, {"idx": 19, "title": "判断的 art——为什么需要经验", "text": "为什么判断需要经验而不只靠方法论？三个原因。第一，多义性：同一用神不同事不同义，选对用神需要经验。第二，矛盾取舍：星吉门凶时如何取舍，要看事项灵活判断。第三，应期细化：内外盘定远近但具体何时应验，需要结合月令和实测经验。方法论是骨架，经验是血肉。初学者先严格按五步走，不要跳步；熟练后才能灵活取舍。AI侦探能帮你验证判断，但最终判断权在你——AI是参谋不是决策者。多排多断多验证，才是提升判断力的正道。"}, {"idx": 20, "title": "本课总结", "text": "总结本课六大收获：第一64用神四大特征多义性多重性纲领性系统性，日干主时干客是总纲；第二竖看宫内星干门神四要素加主客天客地主；第三横看宫宫生克四种关系加主客宫生克；第四内外盘内盘坎震巽离主近快外盘乾坤艮兑主远慢；第五月令旺相有力能成事休囚无力难成事；第六判断五步定用神竖看横看内外盘月令。核心口诀：日干主时干客，竖看星干门神，横看宫宫生克，月令定旺衰。下节课我们进入格局判断，本课的判断方法论就是格局判断的方法论基础。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
