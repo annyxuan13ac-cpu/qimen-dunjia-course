@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L6</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">⚔️</div>
+    <span class="tag">第6课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">吉凶格局与十干克应</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">81种主客关系与格局判断系统</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：格局判断能力 → 第7课输入：应期判断的格局依据</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">本课导览</span><h2>AI角色：辩论员——从正反两面论证格局吉凶</h2><p><b class="lead">本课引入AI辩论员角色，其核心价值在于打破学员对格局吉凶的绝对化认知。</b>奇门遁甲的格局判断从来不是非黑即白的二元判断，而是需要结合用神旺衰、墓迫克害、主客动静等多重条件的综合评估。辩论员角色让AI分别从吉方和凶方给出论证，最后做出综合裁定，这一过程本身就是对学员批判性思维的训练。</p><p><b class="lead">通过辩论员角色，学员将理解：</b>同一个格局在不同条件下可以应吉也可以应凶。例如戊加丙青龙返首虽为大吉之格，但若戊临墓库或被克害，则吉力大减甚至转凶。这种辩证思维是奇门占断的核心能力。</p><div class="grid-cards"><div class="g-card"><div class="gi">🎯</div><div class="gh">核心目标</div><div class="gb">掌握十干克应81种主客关系，熟记7吉7凶重点组合，建立格局判断系统思维</div></div><div class="g-card"><div class="gi">🤖</div><div class="gh">AI角色</div><div class="gb">辩论员：对同一格局从正反两面论证，培养辩证思维，理解格局无绝对吉凶</div></div><div class="g-card"><div class="gi">📚</div><div class="gh">语料来源</div><div class="gb">QM§13十干克应、QM§14吉凶格局、QM§21主客占验</div></div><div class="g-card"><div class="gi">🔗</div><div class="gh">课程衔接</div><div class="gb">本课产出格局判断能力，为第7课定应期提供格局依据</div></div></div><div class="sum-box">格局无绝对吉凶，需结合条件综合判断</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">QM§13</span><h2>十干克应总述——81种主客关系的形成原理</h2><p class="para-anchored"><b class="lead">十干克应是奇门遁甲判断吉凶的核心技法。</b>天盘天干与地盘天干两两组合，十天干共形成10×10=100种理论组合。扣除重复组合、空亡组合以及特殊情况后，古人归纳为81种主客关系。每一种组合都有固定的吉凶属性和象征含义，是数千年实践经验的结晶。</p><p class="para-anchored"><b class="lead">十干克应的本质是主客关系。</b>天盘为客、地盘为主，天盘天干加临地盘天干，反映的是客方对主方的作用关系。例如天盘丙加地盘戊，丙为客方、戊为主方，丙火生戊土，客生主，故为飞鸟跌穴大吉之格。理解这一主客生克关系，是掌握十干克应的钥匙。</p><p class="para-anchored"><b class="lead">判断十干克应时需注意：</b>不可仅凭干克应一端定吉凶，必须结合用神所落宫位、八门、九星、八神综合分析。同一干克应组合在不同宫位、不同门星神配合下，吉凶程度可能截然不同。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">81种 = 100种理论组合 - 重复组合 - 空亡组合 - 特殊情况。本质是天盘客方对地盘主方的生克关系。</div></div><div class="sum-box">天盘为客、地盘为主，干克应反映客对主的作用关系</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">QM§13</span><h2>重点吉组合（一）——青龙返首与飞鸟跌穴</h2><p class="para-anchored"><b class="lead">戊加丙——青龙返首：</b>天盘戊加地盘丙，为大吉之格。青龙代表戊土，返首意为龙头回转，象征事情有转机、重新开始、大业可成。此格谋为大事大吉，尤其利于创业、升迁、谋权。但忌戊临墓库或被庚金克害，若戊土无力则吉力大减。</p><p class="para-anchored"><b class="lead">丙加戊——飞鸟跌穴：</b>天盘丙加地盘戊，大吉之格。飞鸟跌穴比喻鸟归巢穴，象征各得其所、安居乐业。丙火生戊土，客生主，客方主动有利于主方。此格谋为百事吉，尤其利于求财、安葬、置业。与青龙返首同为最吉之格，但象征不同——返首主转机再起，跌穴主安定归位。</p><p class="para-anchored"><b class="lead">丁加乙——玉女守门：</b>天盘丁加地盘乙，大吉之格。玉女守门比喻丁火玉女把守门户，象征有贵人守护、门户安全。丁火与乙木虽为相生关系（木生火），但在此组合中以“守护”取象。利于婚嫁、求谋、出行、守护。此格若临休门则成“人遁”吉格，力量更强。</p><div class="tbl-wrap"><table class="dt"><tr><th>组合</th><th>格名</th><th>象征</th><th>吉凶</th><th>利</th></tr><tr><td>戊加丙</td><td>青龙返首</td><td>转机再起</td><td>大吉</td><td>创业升迁</td></tr><tr><td>丙加戊</td><td>飞鸟跌穴</td><td>安居归位</td><td>大吉</td><td>求财安葬</td></tr><tr><td>丁加乙</td><td>玉女守门</td><td>贵人守护</td><td>大吉</td><td>婚嫁求谋</td></tr></table></div><div class="sum-box">青龙返首主转机，飞鸟跌穴主安定，玉女守门主守护</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">QM§13</span><h2>重点吉组合（二）——伏吟与奇仪相佐</h2><p class="para-anchored"><b class="lead">戊加戊——伏吟：</b>天盘戊加地盘戊，凡事闭塞阻滞，求谋不通，为凶格。伏吟的本质是天盘地盘同干，力量叠加但无变化之机，故主停滞。但伏吟在特殊格局中可作“守成”之用——若占守成之事（如保住现有地位、维持现状），伏吟反主稳固不变。这体现了格局判断的辩证性。</p><p class="para-anchored"><b class="lead">乙加丁——奇仪相佐：</b>天盘乙加地盘丁，吉格。乙奇得丁仪佐助，丁火生乙木（一说丁为玉女佐助乙奇），象征有辅佐之力。谋为可成，但吉力不及青龙返首和飞鸟跌穴。此格需乙奇不犯墓迫克害方为真吉。</p><p class="para-anchored"><b class="lead">伏吟的辩证理解是本课的重要教学点。</b>学员常将伏吟一律视为凶格，但在占“守成、稳固、不变”之事时，伏吟反而应吉。这正是引入AI辩论员角色的意义——让学员理解格局的相对性。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">伏吟虽为凶格，但占守成之事反吉——格局吉凶是相对的，取决于所测之事的性质。</div></div><div class="sum-box">伏吟主停滞，但占守成之事反吉；奇仪相佐主有辅佐之力</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">QM§13</span><h2>重点凶组合——太白入荧与大格刑格</h2><div class="tbl-wrap"><table class="dt"><tr><th>组合</th><th>格名</th><th>象征</th><th>凶险程度</th><th>主事</th></tr><tr><td>乙加庚</td><td>太白入荧</td><td>贼来克我</td><td>大凶</td><td>破财伤灾官司</td></tr><tr><td>庚加乙</td><td>白虎猖狂</td><td>强凌弱</td><td>大凶</td><td>凶伤争斗破耗</td></tr><tr><td>庚加癸</td><td>大格</td><td>道路坎坷</td><td>中凶</td><td>谋为阻滞</td></tr><tr><td>庚加己</td><td>刑格</td><td>刑罚伤灾</td><td>中凶</td><td>官司伤灾</td></tr><tr><td>辛加乙</td><td>腾蛇夭矫</td><td>惊恐怪异</td><td>凶</td><td>口舌是非</td></tr><tr><td>丁加癸</td><td>朱雀投江</td><td>文书受阻</td><td>凶</td><td>音信沉溺</td></tr><tr><td>乙加辛</td><td>青龙逃走</td><td>财帛耗散</td><td>凶</td><td>奴仆背离</td></tr></table></div><p><b class="lead">凶组合的核心特征是客方克害主方，或主客关系形成刑冲克害。</b>以下七种凶组合是占断中最常遇到的，必须熟记其形成条件和象征含义。凶组合的凶险程度有层次之分：太白入荧和白虎猖狂为大凶，大格和刑格为中凶，具体凶险程度还需结合所落宫位和用神旺衰判断。</p></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">QM§14</span><h2>九遁吉格——奇门最重要的九大吉格</h2><p><b class="lead">九遁是奇门遁甲中最重要的九大吉格体系，每种遁格由特定的天干组合配合吉门形成。</b>九遁的共同特点是“遁去”——象征事物以某种方式隐遁、转化、升华，从而趋吉避凶。九遁之中，天遁、地遁、人遁为三才遁，最为常用；风遁、云遁、龙遁、虎遁为四象遁；神遁、鬼遁为灵异遁。</p><p><b class="lead">九遁的判断需同时满足两个条件：</b>特定的天干组合和特定的吉门临宫。缺一不可。例如天遁必须是丙加丁且生门临宫，若丙加丁但临死门则不成天遁。这一“双重条件”是九遁判断的关键，也是学员最易出错之处。</p><div class="grid-cards"><div class="g-card"><div class="gi">🌤️</div><div class="gh">天遁</div><div class="gb">丙加丁+生门临，主天上遁去，利出行升迁</div></div><div class="g-card"><div class="gi">🌍</div><div class="gh">地遁</div><div class="gb">乙加己+生门临，主地下遁去，利埋伏求财</div></div><div class="g-card"><div class="gi">👤</div><div class="gh">人遁</div><div class="gb">丁加乙+休门临，主人遁去，利谋事婚嫁</div></div><div class="g-card"><div class="gi">🌪️</div><div class="gh">风遁</div><div class="gb">乙加辛+开门临，主风遁，利出行转移</div></div><div class="g-card"><div class="gi">☁️</div><div class="gh">云遁</div><div class="gb">辛加乙+生门临，主云遁，利隐避谋事</div></div><div class="g-card"><div class="gi">🐉</div><div class="gh">龙遁</div><div class="gb">乙加癸+休门临，主龙遁，利求谋变化</div></div><div class="g-card"><div class="gi">🐯</div><div class="gh">虎遁</div><div class="gb">辛加庚+生门临，主虎遁，利威权争战</div></div><div class="g-card"><div class="gi">✨</div><div class="gh">神遁</div><div class="gb">丙加庚+生门临，主神遁，利求谋祈福</div></div><div class="g-card"><div class="gi">👻</div><div class="gh">鬼遁</div><div class="gb">丁加癸+生门临，主鬼遁，利超度祭祀</div></div></div><div class="sum-box">九遁需天干组合+吉门临宫双重条件，缺一不成遁</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">QM§14</span><h2>三奇得使与玉女守门——贵人相助之格</h2><p class="para-anchored"><b class="lead">三奇得使：</b>乙奇得甲午辛、丙奇得甲辰庚、丁奇得甲寅癸，为三奇得使格。三奇得到使唤，主贵人相助、谋为可成。此格需三奇本位不犯墓迫克害方为真得使。三奇得使是仅次于九遁的吉格体系，象征三奇（乙丙丁）各自得到特定的六仪使唤，形成“奇仪配合”的吉利组合。</p><p class="para-anchored"><b class="lead">玉女守门：</b>丁奇加临休门，或丁加乙临休门，为玉女守门格。主有玉女把守门户，凡事吉，尤利婚嫁、求谋、守护。玉女守门与九遁中的人遁有重叠——人遁即丁加乙临休门，同时满足玉女守门条件。</p><p class="para-anchored"><b class="lead">三奇贵人升殿：</b>乙奇临震三宫、丙奇临离九宫、丁奇临兑七宫，各归本位，为三奇贵人升殿格。主贵人到位、谋为大吉。此格象征三奇各归本宫（乙木归震木宫、丙火归离火宫、丁火归兑金宫——此处取象而非取五行），如贵人升堂坐殿，威仪自现。</p><p class="para-anchored"><b class="lead">奇游禄位：</b>乙奇临卯、丙奇临午、丁奇临酉，各得禄位，主财禄丰盈。天显时格：六甲时辰（甲子、甲戌、甲申、甲午、甲辰、甲寅）为天显时格，主天显吉象。三诈五假为特殊吉格，主以诈取胜、以假乱真。</p><div class="sum-box">三奇得使主贵人相助，玉女守门主门户安全，贵人升殿主贵人到位</div></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">QM§14</span><h2>庚格凶格体系——庚金为阻碍肃杀之神</h2><p class="para-anchored"><b class="lead">庚格是奇门遁甲中最重要的凶格体系。</b>庚金在奇门中代表阻碍、肃杀、兵戈之神，庚加临年月日时四干，分别主年月日时四个时间层级的大阻碍大凶事。庚格体系是奇门占断中判断凶险事件及其应期的核心依据。</p><p class="para-anchored"><b class="lead">庚加年干：</b>主年内有大阻碍、大凶事，如破财、伤灾、官灾。影响范围最广、持续时间最长。庚加月干：主月内有大阻碍、大凶事。庚加日干：主日内有大阻碍、大凶事，克应最速，实际占断中最为常用。庚加时干：主时内有突发凶事，影响范围最小但来势最猛。</p><p class="para-anchored"><b class="lead">庚格的凶险程度与所加干的位置有关：</b>加年干最重（影响全年），加时干最轻（仅一时辰）。但庚加日干因克应迅速，实际占断中最为常用。在判断应期时，庚加年干应年、庚加月干应月、庚加日干应日——这是第7课定应期的重要方法之一。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">庚加日干因克应迅速最为常用，是第7课庚格法定应期的核心依据。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>庚格</th><th>主事</th><th>影响范围</th><th>克应速度</th><th>常用度</th></tr><tr><td>庚加年干</td><td>年内大凶</td><td>全年</td><td>慢</td><td>中</td></tr><tr><td>庚加月干</td><td>月内大凶</td><td>一月</td><td>中</td><td>中</td></tr><tr><td>庚加日干</td><td>日内大凶</td><td>一日</td><td>快</td><td>高</td></tr><tr><td>庚加时干</td><td>时内突发</td><td>一时辰</td><td>最快</td><td>低</td></tr></table></div><div class="sum-box">庚金为阻碍肃杀之神，加年月日时四干主四时间层级大凶</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">QM§14</span><h2>六仪击刑——六仪临自刑之地的凶格</h2><p class="para-anchored"><b class="lead">六仪击刑是六仪（戊己庚辛壬癸）临于自刑之地的凶格。</b>自刑的本质是五行力量过旺或受克而形成的“自我刑伤”，象征内部矛盾、自我损耗。六仪击刑主百事不利，尤忌谋为、出行、求财。</p><p class="para-anchored"><b class="lead">六仪击刑的六种情况各有不同的象征含义和主事方向。</b>戊临震三宫主官非伤灾（木克土），己临坤二宫主阻滞耗散（同土自刑），庚临艮八宫主刑伤（土生金过旺），辛临离九宫主血光官非（火克金），壬临坎一宫主灾厄失脱（同水自刑），癸临巽四宫主口舌虚惊（水临风木）。</p><p class="para-anchored"><b class="lead">六仪击刑与庚格的区别在于：</b>庚格是外部阻碍（庚金克伐），六仪击刑是内部自损（自我刑伤）。在实际占断中，庚格主外来凶险，六仪击刑主内部矛盾。两者同时出现时，主内外交困、凶上加凶。</p><div class="tbl-wrap"><table class="dt"><tr><th>击刑</th><th>形成条件</th><th>五行关系</th><th>主事</th></tr><tr><td>戊临震三宫</td><td>戊土临震木</td><td>木克土</td><td>官非伤灾</td></tr><tr><td>己临坤二宫</td><td>己土临坤土</td><td>同土自刑</td><td>阻滞耗散</td></tr><tr><td>庚临艮八宫</td><td>庚金临艮土</td><td>土生金过旺</td><td>刑伤</td></tr><tr><td>辛临离九宫</td><td>辛金临离火</td><td>火克金</td><td>血光官非</td></tr><tr><td>壬临坎一宫</td><td>壬水临坎水</td><td>同水自刑</td><td>灾厄失脱</td></tr><tr><td>癸临巽四宫</td><td>癸水临巽木</td><td>水临风木</td><td>口舌虚惊</td></tr></table></div><div class="sum-box">六仪击刑主内部自损，与庚格的外部阻碍形成互补凶格体系</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">QM§14</span><h2>三奇入墓与受制——奇力受损的凶格</h2><p class="para-anchored"><b class="lead">三奇入墓：</b>乙奇临坤二宫（木墓在未）、丙奇临乾六宫（火墓在戌）、丁奇临艮八宫，三奇入墓主奇力受困、谋为不通。墓库之地象征力量被收藏、困住，三奇本为吉力之源，入墓则吉力无法发挥。</p><p class="para-anchored"><b class="lead">三奇受制：</b>乙奇临金宫（乾兑）被克、丙奇临水宫（坎）被克、丁奇临水宫（坎）被克，三奇受制主奇力受损、吉而不吉。受制与入墓的区别在于：入墓是力量被收藏（被动），受制是力量被克伐（主动受攻击）。</p><p class="para-anchored"><b class="lead">时干入墓：</b>时干所临之宫为时干墓库之地，主谋为不通、百事阻滞。门迫：八门所临之宫五行克八门本宫五行，如开门临离火被克，主吉门不吉。悖格：时干加临日干且时干克日干，主悖逆不顺。伏吟：天盘与地盘同干，主闭塞停滞。反吟：天盘与地盘相冲，主反复变动。五不遇时：时干克日干（阳克阳、阴克阴），主百事不宜大凶。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">五不遇时是奇门中最凶的时辰之一——时干克日干且阴阳同性克，百事不宜。</div></div><div class="sum-box">三奇入墓主奇力受困，受制主奇力被克，五不遇时为最凶时辰</div></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">QM§14</span><h2>吉格与凶格全景对比</h2><div class="tbl-wrap"><table class="dt"><tr><th>类别</th><th>代表格局</th><th>形成条件</th><th>象征</th><th>吉凶</th></tr><tr><td>最吉</td><td>飞鸟跌穴/青龙返首</td><td>丙加戊/戊加丙</td><td>安居/转机</td><td>大吉</td></tr><tr><td>大吉</td><td>三奇得使</td><td>奇得仪使</td><td>贵人相助</td><td>吉</td></tr><tr><td>大吉</td><td>九遁</td><td>干组合+吉门</td><td>遁去趋吉</td><td>吉</td></tr><tr><td>吉</td><td>玉女守门</td><td>丁加乙+休门</td><td>门户安全</td><td>吉</td></tr><tr><td>吉</td><td>三奇贵人升殿</td><td>奇归本位</td><td>贵人到位</td><td>吉</td></tr><tr><td>大凶</td><td>太白入荧/白虎猖狂</td><td>乙加庚/庚加乙</td><td>贼克/强凌</td><td>大凶</td></tr><tr><td>中凶</td><td>庚格</td><td>庚加年月日时</td><td>阻碍肃杀</td><td>凶</td></tr><tr><td>中凶</td><td>六仪击刑</td><td>仪临自刑</td><td>内部自损</td><td>凶</td></tr><tr><td>凶</td><td>三奇入墓/受制</td><td>奇临墓克</td><td>奇力受损</td><td>凶</td></tr><tr><td>最凶</td><td>五不遇时</td><td>时干克日干</td><td>百事不宜</td><td>大凶</td></tr></table></div><p><b class="lead">以下表格汇总奇门遁甲的主要吉格和凶格，便于学员建立全局认知。</b>吉格和凶格并非简单对立——有些格局在不同条件下可以转换。判断时需综合考虑格局数量、力量强弱、用神旺衰等因素。</p></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">QM§21</span><h2>格局判断精要——先大后小、先吉后凶</h2><p class="para-anchored"><b class="lead">格局判断需遵循“先大后小、先吉后凶、综合权衡”的三步原则。</b>这一原则的核心是先看影响全局的大格局，再看局部的小格局；先看吉格的力量，再看凶格的力量；最后综合权衡吉凶对比，做出总体判断。</p><p class="para-anchored"><b class="lead">判断次序：</b>第一步看大局——伏吟反吟、空亡等影响全局的格局。伏吟主全局闭塞，反吟主全局反复，空亡主力量虚耗。第二步看格局——吉格凶格的数量和力量。第三步看用神——用神所临的门星神及其旺衰。第四步看主客——动静先后、主客分判。</p><p class="para-anchored"><b class="lead">最吉格局：</b>飞鸟跌穴（丙加戊）、青龙返首（戊加丙）、三奇得使，此三格为奇门最吉之格，遇之谋为百事大吉。大凶格局：腾蛇夭矫（辛加乙）、朱雀投江（丁加癸）、青龙逃走（乙加辛）、白虎猖狂（庚加丙）、太白入荧（庚加乙），此五格为大凶之格，遇之百事不宜。吉凶相抵：吉多凶少以吉论，凶多吉少以凶论，吉凶相当则以用神旺衰决之。</p><div class="sum-box">判断次序：大局→格局→用神→主客，四步综合判断</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">QM§21</span><h2>格局判断四步流程</h2><ol class="steps-list"><li>第一步·看大局：判断伏吟反吟、空亡等全局格局。伏吟主闭塞停滞，反吟主反复变动，空亡主力量虚耗。此步决定全局基调。</li><li>第二步·看格局：统计吉格凶格的数量和力量。重点检查九遁、三奇得使、庚格、六仪击刑等核心格局的有无和强弱。</li><li>第三步·看用神：分析用神所临的八门、九星、八神及其旺衰。用神旺则吉格力强，用神衰则吉格力弱。</li><li>第四步·看主客：分判主客动静先后，结合五阳时利客五阴时利主法则，确定最终吉凶和行动策略。</li></ol><div class="sum-box">四步流程：大局→格局→用神→主客，严格按序不可跳步</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">QM§21</span><h2>主客占验——五阳时利客、五阴时利主</h2><p class="para-anchored"><b class="lead">主客占验是奇门遁甲断局的核心法则之一。</b>五阳时（甲乙丙丁戊）利客方先动者胜，占断时以天盘为主、客方主动出击。五阴时（己庚辛壬癸）利主方后动者胜，占断时以地盘为主、主方静守待变。这一法则的底层逻辑是：阳主刚主动，阴主柔主静，阳时客方乘阳刚之气先动则胜，阴时主方乘阴柔之气后应则胜。</p><p class="para-anchored"><b class="lead">动静分主客的九条法则：</b>动为客静为主、先动为客后动为主、天盘为客地盘为主、进攻为客防守为主、远客近主、外客内主、奇客仪主、旺客衰主、先声客后应主。这九条法则从不同角度定义主客关系，实际占断中需根据所测之事选择最合适的分判方式。</p><p class="para-anchored"><b class="lead">实际应用：</b>占战争、竞争、博弈等对抗性事件时，必须先分清主客，再定吉凶。主客不分则吉凶难断。占非对抗性事件（如求财、出行）时，以日干为求测人（主），以所测之事的用神为客。例如占求财，日干为求测人，生门为财（客），看生门与日干的关系定求财吉凶。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">主客不分则吉凶难断——这是奇门占断的第一原则，先分主客再定吉凶。</div></div><div class="sum-box">五阳时利客先动，五阴时利主后动；主客不分则吉凶难断</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">QM§13</span><h2>81种主客关系的统计分布</h2><p><b class="lead">81种主客关系按吉凶属性可分为五大类：</b>大吉、吉、中性、凶、大凶。以下统计分布基于传统奇门典籍的归纳，实际占断中各类格局出现的频率还受起局方法和时辰分布的影响。大吉和大凶格局占比相对较少，大部分组合属于吉凶参半或中性，这也说明奇门占断需要综合判断而非仅凭一端定论。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">81</div><div class="kl">总组合数</div><div class="kd">十天干天地盘组合归纳</div></div><div class="kpi blue"><div class="kv">12</div><div class="kl">大吉组合</div><div class="kd">含青龙返首飞鸟跌穴等</div></div><div class="kpi blue"><div class="kv">24</div><div class="kl">吉组合</div><div class="kd">含三奇得使九遁等</div></div><div class="kpi blue"><div class="kv">21</div><div class="kl">中性组合</div><div class="kd">吉凶参半需看条件</div></div><div class="kpi blue"><div class="kv">18</div><div class="kl">凶组合</div><div class="kd">含六仪击刑三奇入墓等</div></div><div class="kpi blue"><div class="kv">6</div><div class="kl">大凶组合</div><div class="kd">含太白入荧五不遇时等</div></div></div><div class="sum-box">大吉大凶占比少，大部分组合需综合条件判断</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">QM§21</span><div class="quote-big"><div class="qi">❝</div><div class="qt">吉凶相抵，吉多凶少以吉论，凶多吉少以凶论，吉凶相当则以用神旺衰决之。</div><div class="qs">奇门遁甲格局判断总则</div></div><p><b class="lead">这条总则体现了奇门占断的辩证思维。</b>在实际断局中，一局往往同时出现吉格和凶格，此时不能简单以一吉一凶相抵消，而需比较吉格和凶格的数量、力量、与用神的关系。例如一局中出现两个吉格一个凶格，但凶格恰克用神，则可能以凶论。</p><p><b class="lead">格局判断的辩证性正是本课引入AI辩论员角色的原因。</b>辩论员让AI从正反两面论证同一格局，帮助学员理解格局吉凶不是绝对的，而是相对的、有条件的。这种辩证思维是奇门占断从入门到精通的关键跨越。</p><div class="sum-box">格局吉凶是相对的、有条件的，需综合权衡而非简单相抵</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">AI融入</span><h2>AI辩论员提示词——格局正反论证</h2><p><b class="lead">以下提示词用于让AI扮演奇门遁甲格局辩论员角色。</b>学员输入一个天盘天干加地盘天干的组合（如“戊加丙”），AI将从正方（吉）和反方（凶）两个立场分别论证，最后给出综合裁定。这一练习帮助学员理解格局吉凶的相对性和条件性。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲格局辩论员。我将给你一个天盘天干加地盘天干的组合（如“戊加丙”），请从正方（吉）和反方（凶）两个立场分别论证：
+
+【正方论证】
+1. 该组合的吉格名称和象征含义
+2. 在何种条件下此格应吉
+3. 历史占断中的应吉案例
+
+【反方论证】
+1. 该组合在何种条件下可能转凶
+2. 墓迫克害对该格局的影响
+3. 历史占断中的应凶案例
+
+【综合裁定】
+给出该格局的总体吉凶评级（大吉/吉/中性/凶/大凶）和适用条件。</div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">AI融入</span><h2>AI主客分析器提示词——主客分判</h2><p><b class="lead">以下提示词用于让AI扮演主客分析器角色。</b>学员输入一个时干，AI将判断该时干属五阳时还是五阴时，利客还是利主，并给出行动策略建议。这一练习帮助学员掌握主客占验的基本法则。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲主客分析器。我将给你一个时干（如“丙”），请判断：
+1. 该时干属五阳时还是五阴时
+2. 利客还是利主
+3. 客方/主方的行动策略建议
+4. 适合的事件类型（对抗性/非对抗性）
+5. 若为对抗性事件，主客如何分判</div></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">课堂测验</span><h2>第6课随堂测验——格局与主客</h2><div class='quiz-q'><p><b>Q1. 天盘戊加地盘丙是什么格局？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 飞鸟跌穴</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 青龙返首</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 玉女守门</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 太白入荧</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 戊加丙为青龙返首，天盘戊（青龙）加地盘丙，龙头回转主转机大吉。丙加戊才是飞鸟跌穴。</div></div><div class='quiz-q'><p><b>Q2. 以下哪个不属于九遁吉格？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,3)'>A. 天遁：丙加丁+生门</div><div class='quiz-opt' onclick='reveal(this,1,1,3)'>B. 地遁：乙加己+生门</div><div class='quiz-opt' onclick='reveal(this,1,2,3)'>C. 人遁：丁加乙+休门</div><div class='quiz-opt' onclick='reveal(this,1,3,3)'>D. 大格：庚加癸+死门</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 大格（庚加癸）是凶格不是吉格，更不属于九遁。九遁均需天干组合+吉门临宫双重条件。</div></div><div class='quiz-q'><p><b>Q3. 六仪击刑中，辛临何宫为击刑？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 震三宫</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 离九宫</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 坎一宫</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 巽四宫</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 辛金临离九宫，离火克辛金，形成击刑，主血光官非。</div></div><div class='quiz-q'><p><b>Q4. 五不遇时的判定条件是什么？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,1)'>A. 时干生日干</div><div class='quiz-opt' onclick='reveal(this,3,1,1)'>B. 时干克日干且阴阳同性</div><div class='quiz-opt' onclick='reveal(this,3,2,1)'>C. 日干克时干</div><div class='quiz-opt' onclick='reveal(this,3,3,1)'>D. 时干与日干相同</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 五不遇时是时干克日干且阳克阳、阴克阴，主百事不宜大凶。</div></div><div class='quiz-q'><p><b>Q5. 五阴时利谁？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 利客先动</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 利主后动</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 利客后动</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 利主先动</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 五阴时（己庚辛壬癸）利主方后动者胜，主方静守待变。五阳时利客先动。</div></div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">课堂讨论</span><h2>辩证思考——格局吉凶的相对性</h2><p>本课核心训练点是格局吉凶的相对性思维。学员需理解：没有绝对吉格也没有绝对凶格，吉凶取决于所测之事的性质、用神旺衰、墓迫克害等条件。以下讨论题引导学员深入思考这一辩证关系。</p><p>讨论时建议使用AI辩论员角色：先让AI从吉方论证，再让AI从凶方论证，最后由学员自己做综合裁定。这一过程模拟了真实占断中的判断流程——先看吉格力量，再看凶格力量，最后综合权衡。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">伏吟通常为凶格主闭塞停滞，但在何种情况下伏吟反吉？请举例说明。</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">一局中同时出现青龙返首（大吉）和太白入荧（大凶），如何判断总体吉凶？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">五不遇时百事不宜，但如果所测之事本身就是凶事（如占敌人是否来犯），五不遇时应如何解读？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">用AI辩论员论证“庚加癸大格”在何种条件下可以转吉，记录AI的正反论证和综合裁定。</div></div></div><p class="hl">格局吉凶是相对的——伏吟可应守成之吉，五不遇时或应凶事之吉</p></div>
+</div>
+
+<div class="slide" data-index="21">
+  <div class="card"><span class="tag">本课总结</span><h2>第6课总结——格局判断能力构建</h2><ul class="steps-list"><li>十干克应81种主客关系：天盘客地盘主，重点掌握7吉7凶组合</li><li>九遁吉格：天遁至鬼遁，需天干组合+吉门临宫双重条件</li><li>凶格体系：庚格（外部阻碍）、六仪击刑（内部自损）、三奇入墓受制、五不遇时</li><li>格局判断四步流程：大局→格局→用神→主客，严格按序</li><li>主客占验：五阳时利客先动，五阴时利主后动，主客不分则吉凶难断</li><li>AI辩论员：从正反两面论证格局吉凶，培养辩证思维</li></ul><div class="sum-box">格局无绝对吉凶，需结合条件综合判断；先分主客再定吉凶</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第7课·定应期与决策原则——格局判断完成后，如何确定吉凶应验的时间？</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>格局判断能力 → 第7课输入：应期判断的格局依据</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位学员好，欢迎来到第6课。今天我们进入奇门遁甲的核心判断体系——吉凶格局与十干克应。这节课的主题是\"81种主客关系\"，我们要系统学习天盘天干与地盘天干组合后形成的各种吉凶格局，以及如何判断这些格局在实际占断中的应吉应凶。本课的AI角色是\"辩论员\"，它将从正反两面论证同一格局的吉凶，帮助大家理解一个核心理念：格局没有绝对的吉凶，吉凶取决于条件。本课产出的是格局判断能力，这是下节课定应期的格局依据。让我们开始。\n\n---"}, {"idx": 1, "title": "本课导览", "text": "先看本课导览。本课有四个核心目标：第一，掌握十干克应81种主客关系，熟记7吉7凶重点组合；第二，建立格局判断的系统思维；第三，理解主客占验的动静法则；第四，学会用AI辩论员角色培养批判性思维。AI辩论员的角色价值在于打破大家对格局吉凶的绝对化认知。奇门遁甲的格局判断从来不是非黑即白的二元判断，而是需要结合用神旺衰、墓迫克害、主客动静等多重条件的综合评估。比如戊加丙青龙返首虽为大吉，但若戊临墓库被克害，吉力大减甚至转凶。这种辩证思维是奇门占断的核心能力。语料来源是QM§13十干克应、QM§14吉凶格局、QM§21主客占验。\n\n---"}, {"idx": 2, "title": "十干克应总述", "text": "我们先理解十干克应的形成原理。天盘天干与地盘天干两两组合，十天干共形成10乘以10等于100种理论组合。扣除重复组合、空亡组合以及特殊情况后，古人归纳为81种主客关系。每一种组合都有固定的吉凶属性和象征含义，是数千年实践经验的结晶。十干克应的本质是主客关系——天盘为客、地盘为主，天盘天干加临地盘天干，反映的是客方对主方的作用关系。比如天盘丙加地盘戊，丙为客方、戊为主方，丙火生戊土，客生主，所以为飞鸟跌穴大吉之格。理解这一主客生克关系，是掌握十干克应的钥匙。还需注意：不可仅凭干克应一端定吉凶，必须结合用神所落宫位、八门、九星、八神综合分析。\n\n---"}, {"idx": 3, "title": "重点吉组合（一）", "text": "现在逐一讲解重点吉组合。戊加丙——青龙返首：天盘戊加地盘丙，大吉之格。青龙代表戊土，返首意为龙头回转，象征事情有转机、重新开始、大业可成。此格谋为大事大吉，尤其利于创业、升迁、谋权。但忌戊临墓库或被庚金克害。丙加戊——飞鸟跌穴：天盘丙加地盘戊，大吉之格。飞鸟跌穴比喻鸟归巢穴，象征各得其所、安居乐业。丙火生戊土，客生主，客方主动有利于主方。此格谋为百事吉，尤其利于求财、安葬、置业。注意青龙返首和飞鸟跌穴虽同为大吉，但象征不同——返首主转机再起，跌穴主安定归位。丁加乙——玉女守门：天盘丁加地盘乙，大吉之格。玉女守门比喻丁火玉女把守门户，象征有贵人守护、门户安全。利于婚嫁、求谋、出行。若临休门则成\"人遁\"吉格，力量更强。\n\n---"}, {"idx": 4, "title": "重点吉组合（二）", "text": "继续看伏吟和奇仪相佐。戊加戊——伏吟：天盘戊加地盘戊，凡事闭塞阻滞，求谋不通，为凶格。伏吟的本质是天盘地盘同干，力量叠加但无变化之机，故主停滞。但伏吟在特殊格局中可作\"守成\"之用——若占守成之事，比如保住现有地位、维持现状，伏吟反主稳固不变。这体现了格局判断的辩证性。乙加丁——奇仪相佐：天盘乙加地盘丁，吉格。乙奇得丁仪佐助，象征有辅佐之力。谋为可成，但吉力不及青龙返首和飞鸟跌穴。此格需乙奇不犯墓迫克害方为真吉。伏吟的辩证理解是本课的重要教学点。大家常将伏吟一律视为凶格，但在占\"守成、稳固、不变\"之事时，伏吟反而应吉。这正是引入AI辩论员角色的意义——让大家理解格局的相对性。\n\n---"}, {"idx": 5, "title": "重点凶组合", "text": "接下来看重点凶组合。凶组合的核心特征是客方克害主方，或主客关系形成刑冲克害。乙加庚——太白入荧：天盘乙加地盘庚，大凶之格。太白庚金入荧惑乙木，金克木，象征贼来克我、官灾横祸。主破财、伤灾、官司。庚加乙——白虎猖狂：天盘庚加地盘乙，大凶之格。白虎庚猖狂克乙，象征强凌弱、横暴之事。主凶伤、争斗、破耗。庚加癸——大格：天盘庚加地盘癸，凶格。庚为道路，癸为天网，大格主道路坎坷、行人失迷、谋为阻滞。庚加己——刑格：天盘庚加地盘己，凶格。庚刑己，主刑罚、官司、伤灾。辛加乙——腾蛇夭矫主惊恐怪异，丁加癸——朱雀投江主文书受阻，乙加辛——青龙逃走主财帛耗散。凶组合的凶险程度有层次：太白入荧和白虎猖狂为大凶，大格和刑格为中凶。\n\n---"}, {"idx": 6, "title": "九遁吉格", "text": "九遁是奇门遁甲中最重要的九大吉格体系。每种遁格由特定的天干组合配合吉门形成。九遁的共同特点是\"遁去\"——象征事物以某种方式隐遁、转化、升华，从而趋吉避凶。天遁：丙加丁加生门临，主天上遁去，利出行升迁。地遁：乙加己加生门临，主地下遁去，利埋伏求财。人遁：丁加乙加休门临，主人遁去，利谋事婚嫁。风遁：乙加辛加开门临，利出行转移。云遁：辛加乙加生门临，利隐避谋事。龙遁：乙加癸加休门临，利求谋变化。虎遁：辛加庚加生门临，利威权争战。神遁：丙加庚加生门临，利求谋祈福。鬼遁：丁加癸加生门临，利超度祭祀。九遁的判断需同时满足两个条件：特定的天干组合和特定的吉门临宫，缺一不可。这是九遁判断的关键，也是大家最易出错之处。\n\n---"}, {"idx": 7, "title": "三奇得使与玉女守门", "text": "三奇得使：乙奇得甲午辛、丙奇得甲辰庚、丁奇得甲寅癸，为三奇得使格。三奇得到使唤，主贵人相助、谋为可成。此格需三奇本位不犯墓迫克害方为真得使。三奇得使是仅次于九遁的吉格体系，象征三奇各自得到特定的六仪使唤，形成\"奇仪配合\"的吉利组合。玉女守门：丁奇加临休门，或丁加乙临休门，主有玉女把守门户，凡事吉，尤利婚嫁、求谋、守护。玉女守门与九遁中的人遁有重叠——人遁即丁加乙临休门，同时满足玉女守门条件。三奇贵人升殿：乙奇临震三宫、丙奇临离九宫、丁奇临兑七宫，各归本位，主贵人到位、谋为大吉。此格象征三奇各归本宫，如贵人升堂坐殿，威仪自现。奇游禄位：乙临卯、丙临午、丁临酉，各得禄位，主财禄丰盈。天显时格：六甲时辰为天显时格，主天显吉象。三诈五假为特殊吉格，主以诈取胜。\n\n---"}, {"idx": 8, "title": "庚格凶格体系", "text": "庚格是奇门遁甲中最重要的凶格体系。庚金在奇门中代表阻碍、肃杀、兵戈之神。庚加临年月日时四干，分别主年月日时四个时间层级的大阻碍大凶事。庚加年干主年内大凶，影响范围最广、持续时间最长。庚加月干主月内大凶。庚加日干主日内大凶，克应最速，实际占断中最为常用。庚加时干主时内突发凶事，影响范围最小但来势最猛。庚格的凶险程度与所加干的位置有关：加年干最重，加时干最轻。但庚加日干因克应迅速，实际占断中最为常用。这里要特别提醒大家：在判断应期时，庚加年干应年、庚加月干应月、庚加日干应日——这是下节课定应期的重要方法之一，叫做\"庚格法定应期\"。所以本课的庚格体系是下节课的直接输入。\n\n---"}, {"idx": 9, "title": "六仪击刑", "text": "六仪击刑是六仪（戊己庚辛壬癸）临于自刑之地的凶格。自刑的本质是五行力量过旺或受克而形成的\"自我刑伤\"，象征内部矛盾、自我损耗。六仪击刑主百事不利，尤忌谋为、出行、求财。六种情况：戊临震三宫主官非伤灾（木克土），己临坤二宫主阻滞耗散（同土自刑），庚临艮八宫主刑伤（土生金过旺），辛临离九宫主血光官非（火克金），壬临坎一宫主灾厄失脱（同水自刑），癸临巽四宫主口舌虚惊。六仪击刑与庚格的区别在于：庚格是外部阻碍（庚金克伐），六仪击刑是内部自损（自我刑伤）。在实际占断中，庚格主外来凶险，六仪击刑主内部矛盾。两者同时出现时，主内外交困、凶上加凶。\n\n---"}, {"idx": 10, "title": "三奇入墓与受制", "text": "三奇入墓：乙奇临坤二宫（木墓在未）、丙奇临乾六宫（火墓在戌）、丁奇临艮八宫，三奇入墓主奇力受困、谋为不通。墓库之地象征力量被收藏、困住，三奇本为吉力之源，入墓则吉力无法发挥。三奇受制：乙奇临金宫被克、丙奇临水宫被克、丁奇临水宫被克，三奇受制主奇力受损、吉而不吉。受制与入墓的区别：入墓是力量被收藏（被动），受制是力量被克伐（主动受攻击）。时干入墓主谋为不通百事阻滞。门迫是八门所临之宫五行克八门本宫五行，如开门临离火被克，主吉门不吉。悖格是时干加临日干且时干克日干，主悖逆不顺。伏吟主闭塞停滞，反吟主反复变动。五不遇时是时干克日干且阴阳同性克，主百事不宜大凶，是奇门中最凶的时辰之一。\n\n---"}, {"idx": 11, "title": "吉格与凶格全景对比", "text": "这张表格汇总了奇门遁甲的主要吉格和凶格，便于大家建立全局认知。最吉格局有飞鸟跌穴、青龙返首、三奇得使。大吉格局有九遁、玉女守门、三奇贵人升殿。大凶格局有太白入荧、白虎猖狂。中凶格局有庚格、六仪击刑。凶格有三奇入墓受制。最凶格局有五不遇时。吉格和凶格并非简单对立——有些格局在不同条件下可以转换。判断时需综合考虑格局数量、力量强弱、用神旺衰等因素。核心原则是：吉凶相抵，吉多凶少以吉论，凶多吉少以凶论，吉凶相当则以用神旺衰决之。这条总则体现了奇门占断的辩证思维，也是我们引入AI辩论员角色的核心理念依据。\n\n---"}, {"idx": 12, "title": "格局判断精要", "text": "格局判断需遵循\"先大后小、先吉后凶、综合权衡\"的三步原则。这一原则的核心是先看影响全局的大格局，再看局部的小格局；先看吉格的力量，再看凶格的力量；最后综合权衡吉凶对比，做出总体判断。判断次序分四步：第一步看大局——伏吟反吟、空亡等影响全局的格局。伏吟主全局闭塞，反吟主全局反复，空亡主力量虚耗。第二步看格局——吉格凶格的数量和力量。第三步看用神——用神所临的门星神及其旺衰。第四步看主客——动静先后、主客分判。最吉格局是飞鸟跌穴、青龙返首、三奇得使，遇之谋为百事大吉。大凶格局是腾蛇夭矫、朱雀投江、青龙逃走、白虎猖狂、太白入荧，遇之百事不宜。大家一定要记住这个判断次序，不可跳步。\n\n---"}, {"idx": 13, "title": "格局判断四步流程", "text": "我们用流程图来展示格局判断的四步标准操作程序。第一步看大局：判断伏吟反吟、空亡等全局格局。伏吟主闭塞停滞，反吟主反复变动，空亡主力量虚耗。此步决定全局基调。第二步看格局：统计吉格凶格的数量和力量。重点检查九遁、三奇得使、庚格、六仪击刑等核心格局的有无和强弱。第三步看用神：分析用神所临的八门、九星、八神及其旺衰。用神旺则吉格力强，用神衰则吉格力弱。第四步看主客：分判主客动静先后，结合五阳时利客五阴时利主法则，确定最终吉凶和行动策略。这四步必须严格按顺序执行，不可跳步或倒序。每一步的判断结果都会影响后续步骤的分析。\n\n---"}, {"idx": 14, "title": "主客占验", "text": "主客占验是奇门遁甲断局的核心法则之一。五阳时（甲乙丙丁戊）利客方先动者胜，占断时以天盘为主、客方主动出击。五阴时（己庚辛壬癸）利主方后动者胜，占断时以地盘为主、主方静守待变。这一法则的底层逻辑是：阳主刚主动，阴主柔主静，阳时客方乘阳刚之气先动则胜，阴时主方乘阴柔之气后应则胜。动静分主客有九条法则：动为客静为主、先动为客后动为主、天盘为客地盘为主、进攻为客防守为主、远客近主、外客内主、奇客仪主、旺客衰主、先声客后应主。实际应用时，占对抗性事件必须先分清主客再定吉凶。主客不分则吉凶难断——这是奇门占断的第一原则。\n\n---"}, {"idx": 15, "title": "81种主客关系统计", "text": "来看81种主客关系的统计分布。81种组合按吉凶属性分为五大类：大吉12种、吉24种、中性21种、凶18种、大凶6种。大吉和大凶格局占比相对较少，大部分组合属于吉凶参半或中性。这也说明奇门占断需要综合判断而非仅凭一端定论。大吉组合包含青龙返首、飞鸟跌穴等，大凶组合包含太白入荧、五不遇时等。中性组合最多，需要结合具体条件才能判断吉凶。这个统计分布告诉我们：奇门遁甲的格局判断不是简单的\"查表\"——大部分组合需要结合用神旺衰、墓迫克害、主客动静等条件综合分析，这也是为什么我们需要系统学习格局判断的四步流程。\n\n---"}, {"idx": 16, "title": "格局判断金句", "text": "这条金句是奇门遁甲格局判断的总则：\"吉凶相抵，吉多凶少以吉论，凶多吉少以凶论，吉凶相当则以用神旺衰决之。\"这条总则体现了奇门占断的辩证思维。在实际断局中，一局往往同时出现吉格和凶格，此时不能简单以一吉一凶相抵消，而需比较吉格和凶格的数量、力量、与用神的关系。比如一局中出现两个吉格一个凶格，但凶格恰克用神，则可能以凶论。格局判断的辩证性正是本课引入AI辩论员角色的原因。辩论员让AI从正反两面论证同一格局，帮助大家理解格局吉凶不是绝对的，而是相对的、有条件的。这种辩证思维是奇门占断从入门到精通的关键跨越。\n\n---"}, {"idx": 17, "title": "AI辩论员提示词", "text": "现在进入AI融入环节。这是AI辩论员的提示词。使用方法是：大家输入一个天盘天干加地盘天干的组合，比如\"戊加丙\"，AI将从正方（吉）和反方（凶）两个立场分别论证。正方论证包括：该组合的吉格名称和象征含义、在何种条件下应吉、历史占断中的应吉案例。反方论证包括：在何种条件下可能转凶、墓迫克害的影响、历史应凶案例。最后AI给出综合裁定，包括总体吉凶评级和适用条件。这个练习的核心价值在于：让大家亲眼看到同一个格局可以从正反两面论证，从而理解格局吉凶的相对性。建议大家课后至少用5个不同组合测试这个提示词，记录AI的论证过程。\n\n---"}, {"idx": 18, "title": "AI主客分析器提示词", "text": "第二个AI提示词是主客分析器。大家输入一个时干，比如\"丙\"，AI将判断：该时干属五阳时还是五阴时、利客还是利主、客方或主方的行动策略建议、适合的事件类型。如果是对抗性事件，AI还会给出主客如何分判。这个练习帮助大家掌握主客占验的基本法则。建议结合第15页的主客占验内容一起练习，先用人工判断，再用AI验证，对比两者的分析是否一致。如果出现分歧，思考分歧的原因——是自己的判断有误，还是AI的分析有偏差。这种\"人机对比\"练习是提高占断能力的有效方法。\n\n---"}, {"idx": 19, "title": "课堂测验", "text": "现在进行随堂测验。第一题：天盘戊加地盘丙是什么格局？答案是青龙返首。注意戊加丙和丙加戊不要混淆——戊加丙是青龙返首（天盘戊加地盘丙），丙加戊才是飞鸟跌穴。第二题：以下哪个不属于九遁吉格？答案是大格庚加癸加死门。大格是凶格不是吉格，九遁均需天干组合加吉门临宫双重条件。第三题：六仪击刑中辛临何宫？答案是离九宫。辛金临离火，火克金形成击刑，主血光官非。第四题：五不遇时的判定条件？答案是时干克日干且阴阳同性。第五题：五阴时利谁？答案是利主后动。五阴时己庚辛壬癸利主方后动者胜。大家答对了几题？\n\n---"}, {"idx": 20, "title": "课堂讨论", "text": "进入课堂讨论环节。有四道讨论题。第一题：伏吟通常为凶格主闭塞停滞，但在何种情况下伏吟反吉？提示：占守成之事时。第二题：一局中同时出现青龙返首和太白入荧，如何判断总体吉凶？提示：看用神与两格的关系，吉格凶格谁与用神更亲近。第三题：五不遇时百事不宜，但如果所测之事本身就是凶事，五不遇时应如何解读？提示：凶时占凶事或应\"凶凶得吉\"——敌人来犯但五不遇时主其谋不成。第四题：用AI辩论员论证\"庚加癸大格\"在何种条件下可以转吉，记录AI的正反论证和综合裁定。这些讨论题的核心训练点是格局吉凶的相对性思维。建议大家分组讨论，每组选一题深入分析。\n\n---"}, {"idx": 21, "title": "本课总结", "text": "最后总结本课核心内容。第一，十干克应81种主客关系：天盘客地盘主，重点掌握7吉7凶组合。第二，九遁吉格：天遁至鬼遁，需天干组合加吉门临宫双重条件。第三，凶格体系：庚格主外部阻碍、六仪击刑主内部自损、三奇入墓受制、五不遇时为最凶。第四，格局判断四步流程：大局到格局到用神到主客，严格按序。第五，主客占验：五阳时利客先动，五阴时利主后动，主客不分则吉凶难断。第六，AI辩论员：从正反两面论证格局吉凶，培养辩证思维。核心要点：格局无绝对吉凶，需结合条件综合判断；先分主客再定吉凶。下节课预告：第7课定应期与决策原则——格局判断完成后，如何确定吉凶应验的时间？本课产出格局判断能力，是下节课定应期的格局依据。课后请大家用AI辩论员测试至少5个格局组合，记录论证过程。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
