@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奇门遁甲 AI+ 融合版 · 教师手册</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #3B82F6;
+    --blue-deep: #1E40AF;
+    --blue-light: #60A5FA;
+    --red: #CF0A2C;
+    --bg-grad: linear-gradient(135deg, #E1EEFD, #C5DDF8);
+    --card-bg: #FFFFFF;
+    --text: #1F2937;
+    --text-soft: #4B5563;
+    --text-mute: #6B7280;
+    --border: #D6E4F5;
+    --shadow: 0 4px 14px rgba(59, 130, 246, 0.12);
+    --shadow-hover: 0 8px 24px rgba(59, 130, 246, 0.22);
+    --radius: 14px;
+  }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg-grad);
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* Hero */
+  .hero { text-align: center; padding: 48px 20px 30px; }
+  .hero h1 { font-size: 2.2rem; font-weight: 800; color: var(--blue-deep); letter-spacing: 1px; margin-bottom: 10px; }
+  .hero .sub { font-size: 1.05rem; color: var(--text-soft); margin-bottom: 12px; }
+  .hero .ver { display: inline-block; background: var(--red); color: #fff; font-size: 0.82rem; padding: 4px 14px; border-radius: 20px; }
+
+  /* 目录锚 */
+  .toc {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    padding: 10px 0 20px;
+  }
+  .toc a {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 0.82rem;
+    color: var(--blue-deep);
+    text-decoration: none;
+    box-shadow: var(--shadow);
+  }
+  .toc a:hover { background: var(--blue); color: #fff; }
+
+  /* Section */
+  section { padding: 30px 0; }
+  section h2 {
+    font-size: 1.4rem;
+    color: var(--blue-deep);
+    margin-bottom: 6px;
+    font-weight: 700;
+    border-left: 5px solid var(--blue);
+    padding-left: 12px;
+  }
+  section .h2-sub { color: var(--text-mute); font-size: 0.9rem; margin-bottom: 22px; padding-left: 17px; }
+
+  /* ① 检查清单 */
+  .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 14px; }
+  .check-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    border-top: 4px solid var(--blue);
+  }
+  .check-card .ck-title { font-size: 1rem; font-weight: 700; color: var(--blue-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .check-card .ck-title .icon { font-size: 1.2rem; }
+  .check-card ul { list-style: none; }
+  .check-card li { font-size: 0.86rem; color: var(--text-soft); padding: 3px 0 3px 22px; position: relative; }
+  .check-card li::before { content: "☐"; position: absolute; left: 0; color: var(--blue); font-size: 0.95rem; }
+
+  /* ② 教学卡 */
+  .lesson-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+    margin-bottom: 18px;
+    border-left: 5px solid var(--blue);
+  }
+  .lc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .lc-no { background: var(--blue); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .lc-title { font-size: 1.08rem; font-weight: 700; color: var(--text); }
+  .lc-time { background: rgba(59,130,246,0.1); color: var(--blue-deep); padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; }
+  .lc-ai { background: rgba(207,10,44,0.08); color: var(--red); padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; border: 1px solid rgba(207,10,44,0.2); }
+  .lc-block { margin-bottom: 12px; }
+  .lc-label { font-size: 0.82rem; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
+  .lc-content { font-size: 0.9rem; color: var(--text-soft); }
+  .lc-content ul { list-style: disc; padding-left: 20px; }
+  .lc-content li { padding: 2px 0; }
+  .lc-anchor {
+    background: #EFF6FF;
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 8px 0 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    font-style: italic;
+  }
+  .lc-anchor::before { content: "🎙️ 口播锚  "; font-style: normal; font-weight: 700; color: var(--blue); }
+  .lc-accept { background: #FEF2F2; border-left: 4px solid var(--red); border-radius: 8px; padding: 8px 14px; margin: 8px 0 12px; font-size: 0.88rem; color: var(--text); }
+  .lc-accept::before { content: "✅ 验收标准  "; font-weight: 700; color: var(--red); }
+  .lc-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .btn { display: inline-block; padding: 6px 13px; border-radius: 8px; font-size: 0.82rem; text-decoration: none; font-weight: 600; transition: all 0.2s; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: var(--blue-deep); }
+  .btn-outline { background: #fff; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn-outline:hover { background: var(--blue); color: #fff; }
+
+  /* ③ 教师工具 */
+  .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+  .tool-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; text-align: center; border-top: 3px solid var(--blue); }
+  .tool-card .t-icon { font-size: 1.6rem; }
+  .tool-card .t-name { font-size: 0.95rem; font-weight: 700; color: var(--blue-deep); margin: 4px 0; }
+  .tool-card .t-desc { font-size: 0.78rem; color: var(--text-mute); }
+
+  /* ④ AI 时机 */
+  .ai-time-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .ai-time-table th, .ai-time-table td { padding: 10px 12px; text-align: left; font-size: 0.86rem; border-bottom: 1px solid var(--border); }
+  .ai-time-table th { background: var(--blue); color: #fff; font-weight: 700; }
+  .ai-time-table tr:hover { background: #EFF6FF; }
+  .ai-time-table .role { color: var(--red); font-weight: 700; }
+
+  /* ⑤ 问答弹药 */
+  .ammo-list { display: flex; flex-direction: column; gap: 12px; }
+  .ammo-item { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; border-left: 4px solid var(--red); }
+  .ammo-item .aq { font-size: 0.98rem; font-weight: 700; color: var(--blue-deep); margin-bottom: 6px; }
+  .ammo-item .aq::before { content: "🎯 "; }
+  .ammo-item .aa { font-size: 0.88rem; color: var(--text-soft); }
+  .ammo-item .aa::before { content: "💡 "; }
+
+  /* ⑥ 结课仪式 */
+  .ritual-steps { counter-reset: step; }
+  .ritual-step {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .ritual-step::before {
+    counter-increment: step;
+    content: counter(step);
+    background: var(--blue);
+    color: #fff;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; flex-shrink: 0;
+  }
+  .ritual-step .rs-txt { font-size: 0.9rem; color: var(--text); }
+  .ritual-step .rs-txt b { color: var(--blue-deep); }
+
+  footer { text-align: center; padding: 30px 20px 50px; color: var(--text-mute); font-size: 0.82rem; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.6rem; }
+    .ai-time-table { font-size: 0.78rem; }
+    .ai-time-table th, .ai-time-table td { padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <h1>奇门遁甲 AI+ 融合版 · 教师手册</h1>
+    <p class="sub">八课教学指南 · AI 八角色课堂时机 · 问答弹药库</p>
+    <span class="ver">V1 · 2026-10-21</span>
+    <nav class="toc" style="margin-top:16px;">
+      <a href="#sec1">① 开课检查</a>
+      <a href="#sec2">② 八课教学卡</a>
+      <a href="#sec3">③ 教师六工具</a>
+      <a href="#sec4">④ AI 课堂时机</a>
+      <a href="#sec5">⑤ 问答弹药</a>
+      <a href="#sec6">⑥ 结课仪式</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ① 开课检查清单 -->
+<section id="sec1">
+  <div class="wrap">
+    <h2>① 15 分钟开课检查清单</h2>
+    <p class="h2-sub">开课前 15 分钟逐项确认，四卡打勾即可开讲</p>
+    <div class="check-grid">
+      <div class="check-card">
+        <div class="ck-title"><span class="icon">🖥️</span> 课件已打开</div>
+        <ul>
+          <li>本课课件 HTML 已在浏览器打开</li>
+          <li>全屏试播，翻页/动画正常</li>
+          <li>九宫格/排盘图等配图清晰可见</li>
+          <li>备用 PDF 详案已备妥</li>
+        </ul>
+      </div>
+      <div class="check-card">
+        <div class="ck-title"><span class="icon">📝</span> 题库已准备</div>
+        <ul>
+          <li>题库 Markdown 已打开</li>
+          <li>本课 10 题已定位（四向均衡）</li>
+          <li>答案与解析已过一遍</li>
+          <li>错题本模板已就绪</li>
+        </ul>
+      </div>
+      <div class="check-card">
+        <div class="ck-title"><span class="icon">🤖</span> AI 角色已配置</div>
+        <ul>
+          <li>本课 AI 角色已选定并提示</li>
+          <li>角色 prompt 模板已载入</li>
+          <li>网络连通，大模型可调用</li>
+          <li>AI 使用记录表已发学生</li>
+        </ul>
+      </div>
+      <div class="check-card">
+        <div class="ck-title"><span class="icon">📋</span> 学生先验知识已评估</div>
+        <ul>
+          <li>上课产出链结构件已回收</li>
+          <li>前课错题本已查阅</li>
+          <li>本课预备知识盲点已标注</li>
+          <li>分层教学策略已确定</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 八课教学卡 -->
+<section id="sec2">
+  <div class="wrap">
+    <h2>② 八课教学卡</h2>
+    <p class="h2-sub">每卡含目标·动作·口播锚·验收·文档链接，50 分钟一课</p>
+
+    <!-- 第1课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">1</div><div class="lc-title">奇门遁甲总览——帝王之学的时空模型</div><span class="lc-time">50min</span><span class="lc-ai">AI：导览员</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">建立奇门遁甲整体认知地图，理解九宫格时空模型与三式地位。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>洛书九宫导入，手画九宫格</li><li>导览员 AI 鸟瞰三式之冠全貌</li><li>学生产出：九宫格模型草图</li></ul></div></div>
+      <div class="lc-anchor">同学们，今天我们不急着排盘，先站到高处，鸟瞰一下这门"帝王之学"的全貌——奇门遁甲，到底奇在哪里？</div>
+      <div class="lc-accept">学生能画出洛书九宫格并标注三式地位，产出"九宫格模型"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第01课-奇门遁甲总览-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第01课-奇门遁甲总览-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第2课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">2</div><div class="lc-title">天干地支与三奇六仪——奇门的符号语言</div><span class="lc-time">50min</span><span class="lc-ai">AI：分类器</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">掌握十天干十二地支与三奇六仪排列规则，建立完整符号体系。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>干支速记口诀带读</li><li>分类器 AI 帮学生归类三奇六仪</li><li>学生产出：干支符号体系表</li></ul></div></div>
+      <div class="lc-anchor">上节课我们看了全景图，今天走进去，认识住在九宫格里的"居民"——天干地支和三奇六仪，它们是奇门的字母表。</div>
+      <div class="lc-accept">学生能默写十天干十二地支，说出三奇六仪顺序，产出"干支符号体系"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第02课-天干地支与三奇六仪-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第02课-天干地支与三奇六仪-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第3课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">3</div><div class="lc-title">九星八门八神——天地人神四盘解析</div><span class="lc-time">50min</span><span class="lc-ai">AI：说书人</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">解析天盘九星、人盘八门、神盘八神、地盘六仪的象义与组合关系。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>说书人 AI 用故事讲星门神象义</li><li>四盘要素表边讲边填</li><li>学生产出：四盘要素表</li></ul></div></div>
+      <div class="lc-anchor">符号认全了，现在给它们排座次。奇门有四层盘——天盘星、人盘门、神盘神、地盘仪，就像四层楼，每层住着不同的"角色"。</div>
+      <div class="lc-accept">学生能说出四盘各盘要素数目与代表象义，产出"四盘要素表"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第03课-九星八门八神-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第03课-九星八门八神-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第4课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">4</div><div class="lc-title">定局起局——排盘七步骤</div><span class="lc-time">50min</span><span class="lc-ai">AI：模拟器</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">从定局到布仪，完整走通排盘七步骤，获得独立排盘能力。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>七步骤分步演示，每步暂停让学生跟排</li><li>模拟器 AI 校验学生排盘</li><li>学生产出：一份完整排盘</li></ul></div></div>
+      <div class="lc-anchor">要素都认全了，今天把它们装进九宫格——排盘七步，一步都不能错。跟着我，一步一步来，排完你就入门了。</div>
+      <div class="lc-accept">学生能独立排出一个完整奇门局，七步骤无遗漏，产出"排盘能力"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第04课-定局起局排盘七步骤-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第04课-定局起局排盘七步骤-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第5课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">5</div><div class="lc-title">用神与分析判断——竖看横看断吉凶</div><span class="lc-time">50min</span><span class="lc-ai">AI：侦探</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">掌握取用神与竖看横看判断法，建立断事吉凶的判断框架。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>取用神案例演练（求财/问病/谋事）</li><li>侦探 AI 带学生竖看横看找线索</li><li>学生产出：判断方法流程图</li></ul></div></div>
+      <div class="lc-anchor">盘排出来了，但它不会直接告诉你吉凶。今天我们学当"侦探"——取准用神，竖看横看，让九宫格自己开口说话。</div>
+      <div class="lc-accept">学生能针对给定问题取准用神并给出吉凶判断及理由，产出"判断方法"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第05课-用神与分析判断-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第05课-用神与分析判断-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第6课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">6</div><div class="lc-title">吉凶格局与十干克应——81种主客关系</div><span class="lc-time">50min</span><span class="lc-ai">AI：辩论员</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">掌握常见吉凶格局与十干克应，辨析81种主客关系吉凶取向。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>吉凶格局速记（吉格/凶格各举要例）</li><li>辩论员 AI 与学生辩主客关系吉凶</li><li>学生产出：格局判断速查表</li></ul></div></div>
+      <div class="lc-anchor">会断吉凶了，但格局有吉有凶，主客关系有81种之多。今天请来一位"辩论员"，和你把吉凶格局辩个通透。</div>
+      <div class="lc-accept">学生能识别5种以上吉凶格局，说出十干克应主客关系吉凶，产出"格局判断"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第06课-吉凶格局与十干克应-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第06课-吉凶格局与十干克应-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第7课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">7</div><div class="lc-title">定应期与决策原则——主客动静断应验</div><span class="lc-time">50min</span><span class="lc-ai">AI：出题官</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">掌握定应期方法与主客动静决策原则，断应验时间与行动取舍。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>定应期三法演示（冲合/旺衰/落宫）</li><li>出题官 AI 出应期题考学生</li><li>学生产出：应期决策案例卡</li></ul></div></div>
+      <div class="lc-anchor">断出吉凶还不够，还要知道"什么时候应验""我该动还是该静"。今天学定应期和主客动静——这是奇门最实用的决策功夫。</div>
+      <div class="lc-accept">学生能对给定局定出应期并给出主客动静决策建议，产出"应期决策"结构件。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第07课-定应期与决策原则-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第07课-定应期与决策原则-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+    <!-- 第8课 -->
+    <div class="lesson-card">
+      <div class="lc-head"><div class="lc-no">8</div><div class="lc-title">奇门终身局与四柱合参——人生命运预测</div><span class="lc-time">50min</span><span class="lc-ai">AI：分析搭档</span></div>
+      <div class="lc-block"><div class="lc-label">教学目标</div><div class="lc-content">起终身局，四柱合参，输出人生命运分析报告，完成结业收官。</div></div>
+      <div class="lc-block"><div class="lc-label">关键课堂动作</div><div class="lc-content"><ul><li>终身局起局演示与实操</li><li>分析搭档 AI 与学生合参产出报告</li><li>学生产出：终身局分析报告</li></ul></div></div>
+      <div class="lc-anchor">七课功夫学全了，最后一课把它们全用上——起一个终身局，四柱合参，给自己算一卦人生大势。这是结业，也是新起点。</div>
+      <div class="lc-accept">学生能独立起终身局并产出含四柱合参的"终身局分析报告"，完成八课结业。</div>
+      <div class="lc-links">
+        <a class="btn btn-blue" href="./02-课程详案/02-第08课-奇门终身局与四柱合参-详案.md">📄 详案</a>
+        <a class="btn btn-outline" href="./03-课件/第08课-奇门终身局与四柱合参-深度版.html">🖥️ 课件</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ③ 教师六工具 -->
+<section id="sec3">
+  <div class="wrap">
+    <h2>③ 教师模式六工具</h2>
+    <p class="h2-sub">课件全屏播放时可用，按对应键快捷调用</p>
+    <div class="tool-grid">
+      <div class="tool-card"><div class="t-icon">🎤</div><div class="t-name">提词器</div><div class="t-desc">底部滚动显示口播稿，字号可调</div></div>
+      <div class="tool-card"><div class="t-icon">🔊</div><div class="t-name">朗读</div><div class="t-desc">TTS 朗读当前页讲稿，解放嗓子</div></div>
+      <div class="tool-card"><div class="t-icon">✏️</div><div class="t-name">标注画笔</div><div class="t-desc">在课件上圈画标注，可保存截图</div></div>
+      <div class="tool-card"><div class="t-icon">🤖</div><div class="t-name">AI 助教</div><div class="t-desc">侧栏呼出本课 AI 角色即时答疑</div></div>
+      <div class="tool-card"><div class="t-icon">🧹</div><div class="t-name">清空</div><div class="t-desc">一键清空标注与板书，恢复原页</div></div>
+      <div class="tool-card"><div class="t-icon">⌨️ T</div><div class="t-name">T 键开关</div><div class="t-desc">按 T 键切换教师/学生模式</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ AI 课堂时机 -->
+<section id="sec4">
+  <div class="wrap">
+    <h2>④ AI 八角色课堂时机与执行话术</h2>
+    <p class="h2-sub">什么节点请 AI 出场，说什么话——照表执行</p>
+    <table class="ai-time-table">
+      <thead>
+        <tr><th>课次</th><th>AI 角色</th><th>出场时机</th><th>执行话术（教师引导语）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>第1课</td><td class="role">导览员</td><td>开场前 5 分钟</td><td>"请导览员帮我们鸟瞰一下奇门遁甲的全貌和它在三式中的位置。"</td></tr>
+        <tr><td>第2课</td><td class="role">分类器</td><td>讲完干支后练习环节</td><td>"请分类器帮同学们把三奇六仪归类，并出一组分类判断题。"</td></tr>
+        <tr><td>第3课</td><td class="role">说书人</td><td>四盘象义讲解中</td><td>"请说书人用故事把九星八门八神的象义讲生动一些。"</td></tr>
+        <tr><td>第4课</td><td class="role">模拟器</td><td>学生排盘练习后校验</td><td>"请模拟器校验同学们排的盘，指出哪一步有误并给出正确步骤。"</td></tr>
+        <tr><td>第5课</td><td class="role">侦探</td><td>取用神判断演练时</td><td>"请侦探带大家竖看横看找线索，断一下这个局的吉凶。"</td></tr>
+        <tr><td>第6课</td><td class="role">辩论员</td><td>格局吉凶辨析环节</td><td>"请辩论员和同学辩一辩这个主客关系到底是吉是凶，说出理由。"</td></tr>
+        <tr><td>第7课</td><td class="role">出题官</td><td>定应期练习环节</td><td>"请出题官出三道应期题考考大家，并给出参考答案和解析。"</td></tr>
+        <tr><td>第8课</td><td class="role">分析搭档</td><td>终身局合参产出时</td><td>"请分析搭档和同学一起合参终身局，共同产出人生分析报告。"</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ⑤ 问答弹药 -->
+<section id="sec5">
+  <div class="wrap">
+    <h2>⑤ 问答弹药库</h2>
+    <p class="h2-sub">学生高频提问，教师备好回答要点，课堂不卡壳</p>
+    <div class="ammo-list">
+      <div class="ammo-item"><div class="aq">奇门遁甲和太乙、六壬有什么区别？哪个更准？</div><div class="aa">三式同源而异用：太乙主天道国运，六壬主人事日常，奇门主方位谋略。无"谁更准"之分，各有所长。奇门擅长择方择时、谋事决策，故称"三式之冠"。</div></div>
+      <div class="ammo-item"><div class="aq">排盘一定要用北京时间吗？真太阳时怎么算？</div><div class="aa">起局用干支纪时，应以真太阳时为准。北京时间是东经120度标准时，需按当地经度修正（每差1度约4分钟）。排盘软件可设经度自动换算。</div></div>
+      <div class="ammo-item"><div class="aq">AI 排的盘可信吗？要不要自己再排一遍？</div><div class="aa">AI 排盘可作参考但不可全信——这正是本课边界四条之一"每课找 AI 的错"。核心作业必须手排，AI 排的盘要逐步核验，发现错误即纠正并记录。</div></div>
+      <div class="ammo-item"><div class="aq">用神怎么取？不同的事取法不一样吗？</div><div class="aa">是的，用神因事而异：求财看生门/甲子戊，问病看天芮/死门，谋事看开门/直符。取用神是判断第一步，取错全盘皆错，须多练案例建立直觉。</div></div>
+      <div class="ammo-item"><div class="aq">格局那么多记不住怎么办？</div><div class="aa">先记常用吉格（直符/青龙返首等）与凶格（击刑/空亡等）各5-8个，其余随用随查。本课产出"格局判断速查表"正是为此，反复用自然记住。</div></div>
+      <div class="ammo-item"><div class="aq">定应期到底怎么定？感觉每次都不一样。</div><div class="aa">定应期有三大思路：冲合应期（看用神逢冲逢合）、旺衰应期（看用神当令当旺）、落宫应期（看用神所落宫位对应时间）。不同局适合不同法，需结合具体局象判断，多练案例积累经验。</div></div>
+      <div class="ammo-item"><div class="aq">终身局和八字四柱有什么关系？为什么要合参？</div><div class="aa">终身局是以求测人出生时间起的奇门局，反映先天命局；八字四柱是同一时间的干支排布。二者同源异表，合参可互相印证、补盲区，提高命运分析的可信度和颗粒度。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ 结课仪式 -->
+<section id="sec6">
+  <div class="wrap">
+    <h2>⑥ 结课仪式步骤</h2>
+    <p class="h2-sub">第8课末尾，六步收官，给八课一个圆满句号</p>
+    <div class="ritual-steps">
+      <div class="ritual-step"><div class="rs-txt"><b>展示产出链全景。</b>把八课产出的八个结构件（九宫格模型→终身局分析报告）依次展示，让学生看见自己走过的完整路径。</div></div>
+      <div class="ritual-step"><div class="rs-txt"><b>每位学生宣读终身局分析报告。</b>每人1-2分钟，宣读自己起的终身局与四柱合参结论，教师与AI分析搭档即时点评。</div></div>
+      <div class="ritual-step"><div class="rs-txt"><b>颁发"奇门入门"结业卡。</b>对完成全部八课产出链的学生发放结业卡，标注其AI使用记录与"找AI错"战绩。</div></div>
+      <div class="ritual-step"><div class="rs-txt"><b>回顾AI八角色。</b>逐一回顾导览员到分析搭档八位AI拍档，让学生说哪位最有用、哪位最易出错，沉淀AI协作经验。</div></div>
+      <div class="ritual-step"><div class="rs-txt"><b>教师寄语与进阶路径。</b>寄语强调"奇门入门在排盘，精进在断局"，给出进阶方向：飞盘奇门、转盘奇门、奇门与风水合参等。</div></div>
+      <div class="ritual-step"><div class="rs-txt"><b>合影存档。</b>师生合影，连同八课产出链与结业卡一并存入课程档案，课程闭环。</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>奇门遁甲 AI+ 融合版 · 教师手册 · V1 · 2026-10-21</p>
+  <p>从九宫格到终身局，八课走通三式之冠</p>
+</footer>
+
+</body>
+</html>
