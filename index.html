@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>奇门遁甲 AI+ 融合版 · 学生导航</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #3B82F6;
+    --blue-deep: #1E40AF;
+    --blue-light: #60A5FA;
+    --red: #CF0A2C;
+    --bg-grad: linear-gradient(135deg, #E1EEFD, #C5DDF8);
+    --card-bg: #FFFFFF;
+    --text: #1F2937;
+    --text-soft: #4B5563;
+    --text-mute: #6B7280;
+    --border: #D6E4F5;
+    --shadow: 0 4px 14px rgba(59, 130, 246, 0.12);
+    --shadow-hover: 0 8px 24px rgba(59, 130, 246, 0.22);
+    --radius: 14px;
+  }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg-grad);
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 56px 20px 40px;
+  }
+  .hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--blue-deep);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .hero .sub {
+    font-size: 1.15rem;
+    color: var(--text-soft);
+    margin-bottom: 14px;
+  }
+  .hero .ver {
+    display: inline-block;
+    background: var(--blue);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+  .hero .badge-row {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero .badge {
+    background: rgba(59,130,246,0.1);
+    color: var(--blue-deep);
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+  }
+
+  /* Section */
+  section { padding: 36px 0; }
+  section h2 {
+    font-size: 1.5rem;
+    color: var(--blue-deep);
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  section .h2-sub {
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 0.92rem;
+    margin-bottom: 26px;
+  }
+
+  /* 能力金字塔 */
+  .pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .py-row { display: flex; gap: 10px; }
+  .py-cell {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: var(--shadow);
+    min-width: 150px;
+  }
+  .py-cell:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--blue); }
+  .py-cell .lv { font-size: 0.78rem; color: var(--blue); font-weight: 700; }
+  .py-cell .nm { font-size: 0.95rem; color: var(--text); font-weight: 600; margin-top: 2px; }
+  .py-cell .ds { font-size: 0.78rem; color: var(--text-mute); margin-top: 2px; }
+  .py-l1 { background: linear-gradient(135deg,#DBEAFE,#EFF6FF); }
+  .py-l6 { background: linear-gradient(135deg,#FEE2E2,#FEF2F2); border-color: #FCA5A5; }
+
+  /* 八课卡 */
+  .course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+  .course-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    border-top: 4px solid var(--blue);
+    transition: all 0.25s;
+    display: flex;
+    flex-direction: column;
+  }
+  .course-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+  .course-card .c-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .course-card .c-no {
+    background: var(--blue);
+    color: #fff;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .course-card .c-title { font-size: 1.02rem; font-weight: 700; color: var(--text); }
+  .course-card .c-ai {
+    display: inline-block;
+    background: rgba(207,10,44,0.08);
+    color: var(--red);
+    border: 1px solid rgba(207,10,44,0.2);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+    align-self: flex-start;
+  }
+  .course-card .c-desc { font-size: 0.85rem; color: var(--text-soft); margin-bottom: 14px; flex-grow: 1; }
+  .course-card .c-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: var(--blue-deep); }
+  .btn-outline { background: #fff; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn-outline:hover { background: var(--blue); color: #fff; }
+
+  /* 产出链 */
+  .chain {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .chain-node {
+    background: var(--card-bg);
+    border: 2px solid var(--blue-light);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .chain-node .cn-no { color: var(--blue); font-weight: 700; font-size: 0.75rem; }
+  .chain-node .cn-nm { color: var(--text); font-weight: 600; }
+  .chain-arrow { color: var(--blue); font-size: 1.3rem; font-weight: 700; }
+
+  /* AI 角色 */
+  .ai-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .ai-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    border-left: 4px solid var(--red);
+  }
+  .ai-card .ai-name { font-size: 1rem; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+  .ai-card .ai-use { font-size: 0.84rem; color: var(--text-soft); }
+
+  /* 边界 */
+  .boundary-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 14px; }
+  .boundary-item {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .boundary-item .b-no {
+    background: var(--red);
+    color: #fff;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.82rem; font-weight: 700; flex-shrink: 0;
+  }
+  .boundary-item .b-txt { font-size: 0.88rem; color: var(--text); }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 12px; }
+  .faq-item {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+  }
+  .faq-item .q { font-size: 0.98rem; font-weight: 700; color: var(--blue-deep); margin-bottom: 6px; }
+  .faq-item .q::before { content: "Q "; color: var(--red); }
+  .faq-item .a { font-size: 0.88rem; color: var(--text-soft); }
+  .faq-item .a::before { content: "A "; color: var(--blue); font-weight: 700; }
+
+  /* sticky CTA */
+  .sticky-cta {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 999;
+  }
+  .sticky-cta a {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    padding: 14px 26px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(207,10,44,0.4);
+    transition: all 0.25s;
+  }
+  .sticky-cta a:hover { transform: scale(1.05); background: #A50C24; }
+
+  footer {
+    text-align: center;
+    padding: 30px 20px 80px;
+    color: var(--text-mute);
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.8rem; }
+    .py-cell { min-width: 120px; padding: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="wrap">
+    <h1>奇门遁甲 AI+ 融合版</h1>
+    <p class="sub">从九宫格到终身局，八课走通三式之冠</p>
+    <span class="ver">V1 · 2026-10-21</span>
+    <div class="badge-row">
+      <span class="badge">八课贯通</span>
+      <span class="badge">AI 八角色</span>
+      <span class="badge">产出链闭环</span>
+      <span class="badge">帝王之学</span>
+    </div>
+  </div>
+</header>
+
+<!-- 能力地图 -->
+<section id="map">
+  <div class="wrap">
+    <h2>能力地图 · 六层金字塔</h2>
+    <p class="h2-sub">由浅入深，逐层登顶——点击任一层可跳转对应课程</p>
+    <div class="pyramid">
+      <a class="py-row" href="#lesson8"><div class="py-cell py-l6"><div class="lv">L6 结业</div><div class="nm">终身局分析报告</div><div class="ds">第8课 · 人生命运预测</div></div></a>
+      <a class="py-row" href="#lesson7"><div class="py-cell"><div class="lv">L5 实战</div><div class="nm">应期决策</div><div class="ds">第7课 · 主客动静断应验</div></div></a>
+      <a class="py-row" href="#lesson6"><div class="py-cell"><div class="lv">L5 实战</div><div class="nm">格局判断</div><div class="ds">第6课 · 81种主客关系</div></div></a>
+      <a class="py-row" href="#lesson5"><div class="py-cell"><div class="lv">L4 方法</div><div class="nm">判断方法</div><div class="ds">第5课 · 竖看横看断吉凶</div></div></a>
+      <a class="py-row" href="#lesson4"><div class="py-cell"><div class="lv">L3 操作</div><div class="nm">排盘能力</div><div class="ds">第4课 · 排盘七步骤</div></div></a>
+      <a class="py-row" href="#lesson3"><div class="py-cell"><div class="lv">L2 要素</div><div class="nm">四盘要素表</div><div class="ds">第3课 · 天地人神四盘</div></div></a>
+      <a class="py-row" href="#lesson2"><div class="py-cell"><div class="lv">L2 要素</div><div class="nm">干支符号体系</div><div class="ds">第2课 · 三奇六仪</div></div></a>
+      <a class="py-row" href="#lesson1"><div class="py-cell py-l1"><div class="lv">L1 基础</div><div class="nm">九宫格模型</div><div class="ds">第1课 · 帝王之学总览</div></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- 八课卡 -->
+<section id="lessons">
+  <div class="wrap">
+    <h2>八课导航</h2>
+    <p class="h2-sub">每课配课件 + 题库双入口，AI 角色全程陪学</p>
+    <div class="course-grid">
+
+      <div class="course-card" id="lesson1">
+        <div class="c-head"><div class="c-no">1</div><div class="c-title">奇门遁甲总览——帝王之学的时空模型</div></div>
+        <span class="c-ai">AI 角色：导览员</span>
+        <p class="c-desc">建立九宫格时空模型认知，理解奇门遁甲在三式中的地位与底层逻辑。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第01课-奇门遁甲总览-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson2">
+        <div class="c-head"><div class="c-no">2</div><div class="c-title">天干地支与三奇六仪——奇门的符号语言</div></div>
+        <span class="c-ai">AI 角色：分类器</span>
+        <p class="c-desc">掌握十天干十二地支与三奇六仪的排列规则，建立符号体系。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第02课-天干地支与三奇六仪-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson3">
+        <div class="c-head"><div class="c-no">3</div><div class="c-title">九星八门八神——天地人神四盘解析</div></div>
+        <span class="c-ai">AI 角色：说书人</span>
+        <p class="c-desc">解析天盘九星、人盘八门、神盘八神、地盘六仪的象义与组合。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第03课-九星八门八神-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson4">
+        <div class="c-head"><div class="c-no">4</div><div class="c-title">定局起局——排盘七步骤</div></div>
+        <span class="c-ai">AI 角色：模拟器</span>
+        <p class="c-desc">从定局到布仪，完整走通排盘七步，获得独立排盘能力。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第04课-定局起局排盘七步骤-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson5">
+        <div class="c-head"><div class="c-no">5</div><div class="c-title">用神与分析判断——竖看横看断吉凶</div></div>
+        <span class="c-ai">AI 角色：侦探</span>
+        <p class="c-desc">取用神、竖看横看，建立判断框架，断事吉凶有据可依。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第05课-用神与分析判断-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson6">
+        <div class="c-head"><div class="c-no">6</div><div class="c-title">吉凶格局与十干克应——81种主客关系</div></div>
+        <span class="c-ai">AI 角色：辩论员</span>
+        <p class="c-desc">掌握吉凶格局与十干克应，辨析81种主客关系的吉凶取向。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第06课-吉凶格局与十干克应-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson7">
+        <div class="c-head"><div class="c-no">7</div><div class="c-title">定应期与决策原则——主客动静断应验</div></div>
+        <span class="c-ai">AI 角色：出题官</span>
+        <p class="c-desc">定应期方法与主客动静决策原则，断应验时间与行动取舍。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第07课-定应期与决策原则-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+      <div class="course-card" id="lesson8">
+        <div class="c-head"><div class="c-no">8</div><div class="c-title">奇门终身局与四柱合参——人生命运预测</div></div>
+        <span class="c-ai">AI 角色：分析搭档</span>
+        <p class="c-desc">起终身局，四柱合参，输出人生命运分析报告，结业收官。</p>
+        <div class="c-btns">
+          <a class="btn btn-blue" href="./03-课件/第08课-奇门终身局与四柱合参-深度版.html">📖 课件</a>
+          <a class="btn btn-outline" href="./06-题库/题库.md">✏️ 题库</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 产出链 -->
+<section id="chain">
+  <div class="wrap">
+    <h2>产出链一览</h2>
+    <p class="h2-sub">八课环环相扣，每课产出一个可复用结构件</p>
+    <div class="chain">
+      <div class="chain-node"><div class="cn-no">第1课</div><div class="cn-nm">九宫格模型</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第2课</div><div class="cn-nm">干支符号体系</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第3课</div><div class="cn-nm">四盘要素表</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第4课</div><div class="cn-nm">排盘能力</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第5课</div><div class="cn-nm">判断方法</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第6课</div><div class="cn-nm">格局判断</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第7课</div><div class="cn-nm">应期决策</div></div>
+      <span class="chain-arrow">→</span>
+      <div class="chain-node"><div class="cn-no">第8课</div><div class="cn-nm">终身局分析报告</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- AI 八角色 -->
+<section id="ai-roles">
+  <div class="wrap">
+    <h2>AI 八角色用法</h2>
+    <p class="h2-sub">每课一位 AI 拍档，各司其职，陪你走完全程</p>
+    <div class="ai-grid">
+      <div class="ai-card"><div class="ai-name">① 导览员</div><div class="ai-use">第1课开场，带你鸟瞰奇门全貌，建立整体认知地图。</div></div>
+      <div class="ai-card"><div class="ai-name">② 分类器</div><div class="ai-use">第2课帮你把天干地支、三奇六仪分类归档，符号不再混乱。</div></div>
+      <div class="ai-card"><div class="ai-name">③ 说书人</div><div class="ai-use">第3课用故事讲九星八门八神象义，枯燥要素变生动。</div></div>
+      <div class="ai-card"><div class="ai-name">④ 模拟器</div><div class="ai-use">第4课陪你反复排盘，一步步校验七步骤，练出肌肉记忆。</div></div>
+      <div class="ai-card"><div class="ai-name">⑤ 侦探</div><div class="ai-use">第5课带你找用神、竖看横看，像破案一样断吉凶。</div></div>
+      <div class="ai-card"><div class="ai-name">⑥ 辩论员</div><div class="ai-use">第6课和你辩论格局吉凶，把81种主客关系辩通透。</div></div>
+      <div class="ai-card"><div class="ai-name">⑦ 出题官</div><div class="ai-use">第7课出应期题考你，主客动静决策在实战中检验。</div></div>
+      <div class="ai-card"><div class="ai-name">⑧ 分析搭档</div><div class="ai-use">第8课和你合参终身局，共同产出人生命运分析报告。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 边界四条 -->
+<section id="boundary">
+  <div class="wrap">
+    <h2>学习边界 · 四条铁律</h2>
+    <p class="h2-sub">AI 是拐杖不是轮椅，守住边界才能真学到手</p>
+    <div class="boundary-list">
+      <div class="boundary-item"><div class="b-no">1</div><div class="b-txt"><b>核心作业学生手写。</b>排盘、判断、应期等核心练习必须亲手完成，AI 只做提示不做代笔。</div></div>
+      <div class="boundary-item"><div class="b-no">2</div><div class="b-txt"><b>先猜再问。</b>遇到问题先自己给出猜测答案，再问 AI 验证，培养独立判断力。</div></div>
+      <div class="boundary-item"><div class="b-no">3</div><div class="b-txt"><b>AI 使用要声明。</b>每次用 AI 辅助都要注明用了哪位角色、问的什么、改了哪里，过程可追溯。</div></div>
+      <div class="boundary-item"><div class="b-no">4</div><div class="b-txt"><b>每课找 AI 的错。</b>AI 也会排错盘、断错吉凶，每课至少挑出一处 AI 错误并纠正。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <h2>常见问题 FAQ</h2>
+    <p class="h2-sub">开课前的疑问，这里先答了</p>
+    <div class="faq-list">
+      <div class="faq-item"><div class="q">知识库支持什么格式？</div><div class="a">支持 Markdown、HTML 课件、PDF 文献、图片附件。课件为自包含 HTML，浏览器直接打开；题库为 Markdown，可在线或离线阅读。</div></div>
+      <div class="faq-item"><div class="q">一门课合理课次数？</div><div class="a">本课设为 8 课，对应能力地图六层。一般 6-12 课为宜：少于 6 课难闭环，多于 12 课易疲劳。8 课是"三式之冠"的最佳粒度。</div></div>
+      <div class="faq-item"><div class="q">没网能用吗？</div><div class="a">课件与题库均为本地文件，离线可学。AI 角色需联网调用大模型，离线时可先做手写作业，联网后再与 AI 对话验证。</div></div>
+      <div class="faq-item"><div class="q">能换课件风格吗？</div><div class="a">可以。课件 HTML 采用淡蓝科技风模板，如需古典风、极简风等，可在课程工厂中切换主题重新渲染，内容不变。</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>奇门遁甲 AI+ 融合版 · 课程工厂出品 · V1 · 2026-10-21</p>
+  <p>从九宫格到终身局，八课走通三式之冠</p>
+</footer>
+
+<!-- sticky CTA -->
+<div class="sticky-cta">
+  <a href="./03-课件/第01课-奇门遁甲总览-深度版.html">🚀 开始第1课</a>
+</div>
+
+</body>
+</html>
