@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">🔮</div>
+    <span class="tag">第2课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">天干地支与三奇六仪</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">奇门的符号语言——甲藏何处，干支如何配九宫</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：干支符号体系表 → 第3课输入：星门神落宫的符号基础</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">课程导览</span><h2>本课地图：从天干到三奇制庚</h2><p>奇门遁甲之所以叫'遁甲'，是因为十天干之首的甲从不直接出现在盘面上，而是隐遁于戊己庚辛壬癸六仪之下。理解干支体系，是读懂奇门排盘的第一步——所有星、门、神的落宫，最终都要用干支语言来表达。</p><p>本课我们沿着'天干→地支→六十甲子→三奇六仪→三奇制庚'的路径，把奇门的符号语言一次性建立起来。AI今天扮演'干支分类器'，你输入任意干支，它秒回方位、阴阳、合冲属性。但请注意——AI也会犯错，本课末尾我们要找出它埋的3处错。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">十天干</div><div class="gb">方位阴阳+五合四冲</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">十二地支</div><div class="gb">九宫对应+六冲六合三合局</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">六十甲子</div><div class="gb">循环原理+六甲旬空</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">三奇六仪</div><div class="gb">乙丙丁+戊己庚辛壬癸+甲遁</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">六甲遁仪</div><div class="gb">甲子遁戊→甲寅遁癸</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">三奇制庚</div><div class="gb">乙合/丙克/丁克庚</div></div></div><div class="sum-box">甲遁六仪是'遁甲'二字的字面来源</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">开场钩子</span><div class="quote-big"><div class="qi">❝</div><div class="qt">遁甲者，甲为十干之首，藏于六仪之下，不现于盘面。</div><div class="qs">奇门遁甲命名本义</div></div><p><b class="lead">这个问题看似简单，却直指奇门最核心的设计思想：</b>甲是统帅，统帅不亲自上阵，而是隐遁在六仪（戊己庚辛壬癸）背后指挥。盘面上你看到的永远是六仪和三奇（乙丙丁），甲只通过'甲子遁戊、甲戌遁己'这样的对应关系间接体现。</p><p>理解了这一点，你就明白了为什么奇门排盘首先要排'戊己庚辛壬癸丁丙乙'这九个符号——因为甲不在其中，甲已经遁了。</p><div class="sum-box">甲从不现于盘面，只通过六仪间接体现</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">KP1·十天干</span><h2>十天干总览：方位·阴阳·五行</h2><p class="para-anchored"><b class="lead">十天干依次为甲乙丙丁戊己庚辛壬癸。</b>它们首先携带三重属性：方位（东南中西北）、五行（木火土金水）、阴阳（阳干阴干交替）。这三重属性是后续合冲推演的基础，必须先牢固建立。</p><p class="para-anchored">方位五行的分配遵循'东方木、南方火、西方金、北方水、中央土'的空间布局，每方配两干，前干为阳后干为阴。戊己居中央，无方位对宫，因此无冲——这是学生最常忽略的细节。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">戊己中央土无对宫，因此无冲。学生常误把戊癸冲当冲，但那是'合'不是'冲'。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>天干</th><th>方位</th><th>五行</th><th>阴阳</th></tr><tr><td>甲乙</td><td>东方</td><td>木</td><td>甲阳/乙阴</td></tr><tr><td>丙丁</td><td>南方</td><td>火</td><td>丙阳/丁阴</td></tr><tr><td>戊己</td><td>中央</td><td>土</td><td>戊阳/己阴</td></tr><tr><td>庚辛</td><td>西方</td><td>金</td><td>庚阳/辛阴</td></tr><tr><td>壬癸</td><td>北方</td><td>水</td><td>壬阳/癸阴</td></tr></table></div><div class="sum-box">口诀：甲乙东方木，丙丁南方火，庚辛西方金，壬癸北方水，戊己中央土</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">KP1·天干合冲</span><h2>天干五合与四冲</h2><div class="tbl-wrap"><table class="dt"><tr><th>类型</th><th>组合</th><th>化/冲结果</th><th>记忆要点</th></tr><tr><td>五合</td><td>甲己</td><td>合化土</td><td>1+6</td></tr><tr><td>五合</td><td>乙庚</td><td>合化金</td><td>2+7</td></tr><tr><td>五合</td><td>丙辛</td><td>合化水</td><td>3+8</td></tr><tr><td>五合</td><td>丁壬</td><td>合化木</td><td>4+9</td></tr><tr><td>五合</td><td>戊癸</td><td>合化火</td><td>5+10</td></tr><tr><td>四冲</td><td>甲庚</td><td>金克木</td><td>东西对</td></tr><tr><td>四冲</td><td>乙辛</td><td>金克木</td><td>东西对</td></tr><tr><td>四冲</td><td>丙壬</td><td>水克火</td><td>南北对</td></tr><tr><td>四冲</td><td>丁癸</td><td>水克火</td><td>南北对</td></tr></table></div><p><b class="lead">天干五合是相邻两干合化为一行：</b>甲己合化土、乙庚合化金、丙辛合化水、丁壬合化木、戊癸合化火。注意合化的五行与原干五行不同——甲本木己本土，合化后为土。</p><p><b class="lead">天干四冲是方位相对的两干相冲：</b>甲庚冲（东方木对西方金）、乙辛冲、丙壬冲、丁癸冲。戊己中央无对宫故无冲。合与冲的区别：合是相邻化一，冲是对宫相克。</p></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">AI角色·分类器</span><h2>AI分类器演示：输入干支，秒回属性</h2><p class="para-anchored"><b class="lead">现在请AI分类器登场。</b>它的任务是：你输入任意一个天干或地支，它返回完整的属性JSON——方位、五行、阴阳、合、冲、旬空。这是本课的AI融入环节，用机器做'查表'的苦力活，把人脑解放出来去理解背后的逻辑。</p><p class="para-anchored"><b class="lead">但请保持警惕：</b>AI分类器在'旬空'字段最容易出错，因为它需要先判断该干支属于六甲中哪一旬，再查空亡表。我们稍后会故意给它一张埋了3处错的表来测试你的鉴别力。</p><div class="callout blue"><div class="ci">🤖</div><div class="cb">AI角色：干支分类器。输入'丙'→输出{南方,火,阳,丙辛合水,丙壬冲,甲子旬空戌亥}</div></div><ul class='steps-list'><li>输入天干→返回方位/五行/阴阳/合/冲</li><li>输入地支→返回九宫/阴阳/冲/合/三合局</li><li>输入干支组合→返回旬空</li></ul><div class="sum-box">AI做查表苦力，人脑理解逻辑——这是AI+的正确用法</div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">KP2·十二地支</span><h2>十二地支与九宫对应</h2><p class="para-anchored"><b class="lead">十二地支子丑寅卯辰巳午未申酉戌亥，要配到九宫之上。</b>由于12÷9除不尽，必然一宫多支。实际配法是：四正宫（坎离震兑）各配一支，四维宫（乾坤艮巽）各配两支，中五宫不配地支。</p><p class="para-anchored"><b class="lead">记忆口诀：</b>子坎1、丑寅艮8、卯震3、辰巳巽4、午离9、未申坤2、酉兑7、戌亥乾6。四正宫配子午卯酉（四桃花），四维宫配两支（一阳一阴）。</p><div class="tbl-wrap"><table class="dt"><tr><th>地支</th><th>九宫</th><th>卦象</th><th>阴阳</th></tr><tr><td>子</td><td>坎1</td><td>坎</td><td>阳</td></tr><tr><td>丑</td><td>艮8</td><td>艮</td><td>阴</td></tr><tr><td>寅</td><td>艮8</td><td>艮</td><td>阳</td></tr><tr><td>卯</td><td>震3</td><td>震</td><td>阴</td></tr><tr><td>辰</td><td>巽4</td><td>巽</td><td>阳</td></tr><tr><td>巳</td><td>巽4</td><td>巽</td><td>阴</td></tr><tr><td>午</td><td>离9</td><td>离</td><td>阳</td></tr><tr><td>未</td><td>坤2</td><td>坤</td><td>阴</td></tr><tr><td>申</td><td>坤2</td><td>坤</td><td>阳</td></tr><tr><td>酉</td><td>兑7</td><td>兑</td><td>阴</td></tr><tr><td>戌</td><td>乾6</td><td>乾</td><td>阳</td></tr><tr><td>亥</td><td>乾6</td><td>乾</td><td>阴</td></tr></table></div><div class="sum-box">四正宫各一支，四维宫各两支，中五不配</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">KP2·地支六冲六合</span><h2>地支六冲与六合：冲非合之逆</h2><div class="tbl-wrap"><table class="dt"><tr><th>六冲</th><th>六合</th><th>合化</th></tr><tr><td>子午冲</td><td>子丑合</td><td>土</td></tr><tr><td>丑未冲</td><td>寅亥合</td><td>木</td></tr><tr><td>寅申冲</td><td>卯戌合</td><td>火</td></tr><tr><td>卯酉冲</td><td>辰酉合</td><td>金</td></tr><tr><td>辰戌冲</td><td>巳申合</td><td>水</td></tr><tr><td>巳亥冲</td><td>午未合</td><td>土</td></tr></table></div><p><b class="lead">地支六冲是方位对宫相冲：</b>子午冲、丑未冲、寅申冲、卯酉冲、辰戌冲、巳亥冲。六合是合化五行：子丑合土、寅亥合木、卯戌合火、辰酉合金、巳申合水、午未合土。</p><p><b class="lead">关键易错点：</b>六合与六冲不互为逆。例如子午冲，但子与午不合；子丑合，但子与丑不冲。合与冲是两套独立的关系，不能混为一谈。</p></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">KP2·三合局</span><h2>三合局与三刑六害</h2><p class="para-anchored"><b class="lead">三合局是三个地支合化一行，必须三支齐全才成局：</b>申子辰合水局、亥卯未合木局、寅午戌合火局、巳酉丑合金局。三合局的力量远大于六合，是奇门判断中的重要依据。</p><p class="para-anchored"><b class="lead">三刑主刑伤：</b>寅巳申相刑、丑戌未相刑、子卯相刑。六害主暗害：子未害、丑午害、寅巳害、卯辰害、申亥害、酉戌害。三刑六害在奇门中不如冲合常用，但高级判断会涉及。</p><div class="tbl-wrap"><table class="dt"><tr><th>三合局</th><th>化行</th><th>三刑</th><th>六害</th></tr><tr><td>申子辰</td><td>水</td><td>寅巳申</td><td>子未</td></tr><tr><td>亥卯未</td><td>木</td><td>丑戌未</td><td>丑午</td></tr><tr><td>寅午戌</td><td>火</td><td>子卯</td><td>寅巳</td></tr><tr><td>巳酉丑</td><td>金</td><td>—</td><td>卯辰</td></tr></table></div><div class="sum-box">三合局三支必须齐全才成局，缺一不成</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">KP3·六十甲子</span><h2>六十甲子循环与六甲旬空</h2><p><b class="lead">六十甲子是天干地支依次配对的循环。</b>10天干12地支，最小公倍数60，所以60为一个完整周期。每10个干支为一旬，由六甲（甲子甲戌甲申甲午甲辰甲寅）领头，故称六甲旬。</p><p><b class="lead">每旬10个干支，但地支有12个，所以每旬必空2个地支——这就是旬空（空亡）。</b>空亡的两个地支在该旬中不出现，在奇门判断中表示'落空'无力。</p><div class="tl-v"><div class="tl-item"><div class="tt"><span class="tm">甲子旬</span>1-10</div><div class="td">甲子乙丑...癸酉，空戌亥</div></div><div class="tl-item"><div class="tt"><span class="tm">甲戌旬</span>11-20</div><div class="td">甲戌乙亥...癸未，空申酉</div></div><div class="tl-item"><div class="tt"><span class="tm">甲申旬</span>21-30</div><div class="td">甲申乙酉...癸巳，空午未</div></div><div class="tl-item"><div class="tt"><span class="tm">甲午旬</span>31-40</div><div class="td">甲午乙未...癸卯，空辰巳</div></div><div class="tl-item"><div class="tt"><span class="tm">甲辰旬</span>41-50</div><div class="td">甲辰乙巳...癸丑，空寅卯</div></div><div class="tl-item"><div class="tt"><span class="tm">甲寅旬</span>51-60</div><div class="td">甲寅乙卯...癸亥，空子丑</div></div></div><div class="sum-box">口诀：甲子旬中戌亥空，甲戌旬中申酉空，依次类推</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">KP3·旬空查表</span><h2>旬空查表实操：丙寅属何旬空何支</h2><p class="para-anchored"><b class="lead">查旬空的方法：</b>先找到该干支在六十甲子中的位置，确定属哪一旬，再查该旬空亡。以丙寅为例：丙寅是六十甲子第3位（甲子1、乙丑2、丙寅3），属甲子旬（1-10），甲子旬空戌亥，所以丙寅空戌亥。</p><p class="para-anchored"><b class="lead">再练一例：</b>辛巳。辛巳排第18位，属甲戌旬（11-20），甲戌旬空申酉，所以辛巳空申酉。注意空亡指地支空亡（戌亥、申酉等），不是天干空亡——这是学生最常犯的错误。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">空亡指地支空亡，非天干空亡。戌亥空=这两个地支不出现，非戊己空。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>干支</th><th>序号</th><th>所属旬</th><th>空亡</th></tr><tr><td>丙寅</td><td>3</td><td>甲子旬</td><td>戌亥</td></tr><tr><td>辛巳</td><td>18</td><td>甲戌旬</td><td>申酉</td></tr><tr><td>庚辰</td><td>17</td><td>甲戌旬</td><td>申酉</td></tr><tr><td>丁亥</td><td>24</td><td>甲申旬</td><td>午未</td></tr><tr><td>癸未</td><td>20</td><td>甲戌旬</td><td>申酉</td></tr></table></div><div class="sum-box">空亡是地支概念，不是天干概念</div></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">KP4·三奇六仪</span><h2>三奇六仪：乙丙丁与戊己庚辛壬癸</h2><p class="para-anchored"><b class="lead">三奇是乙、丙、丁，分别称日奇、月奇、星奇。</b>六仪是戊、己、庚、辛、壬、癸。三奇加六仪共九个符号，配九宫，构成奇门排盘的干支基础。</p><p class="para-anchored">甲呢？甲遁藏不现。甲是十干之首、统帅之位，在奇门中隐遁于六仪之下，从不直接出现在盘面上。这就是'遁甲'的本义——甲遁了，你看到的只有三奇六仪九个符号。</p><div class="tbl-wrap"><table class="dt"><tr><th>分类</th><th>符号</th><th>别称</th><th>作用</th></tr><tr><td>三奇</td><td>乙</td><td>日奇</td><td>制庚·合庚</td></tr><tr><td>三奇</td><td>丙</td><td>月奇</td><td>制庚·克庚</td></tr><tr><td>三奇</td><td>丁</td><td>星奇</td><td>制庚·克庚</td></tr><tr><td>六仪</td><td>戊</td><td>—</td><td>甲子遁此</td></tr><tr><td>六仪</td><td>己</td><td>—</td><td>甲戌遁此</td></tr><tr><td>六仪</td><td>庚</td><td>最凶</td><td>白虎本位</td></tr><tr><td>六仪</td><td>辛</td><td>—</td><td>甲申遁此</td></tr><tr><td>六仪</td><td>壬</td><td>—</td><td>甲辰遁此</td></tr><tr><td>六仪</td><td>癸</td><td>—</td><td>甲寅遁此</td></tr></table></div><div class="sum-box">盘面只有三奇六仪九个符号，甲遁藏不现</div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">KP5·六甲遁仪</span><h2>六甲遁仪口诀：甲子遁戊到甲寅遁癸</h2><ol class="steps-list"><li>甲子遁戊——甲子旬的甲，隐遁在戊之下</li><li>甲戌遁己——甲戌旬的甲，隐遁在己之下</li><li>甲申遁庚——甲申旬的甲，隐遁在庚之下</li><li>甲午遁辛——甲午旬的甲，隐遁在辛之下</li><li>甲辰遁壬——甲辰旬的甲，隐遁在壬之下</li><li>甲寅遁癸——甲寅旬的甲，隐遁在癸之下</li></ol><div class="sum-box">口诀：甲子戊甲戌己，甲申庚甲午辛，甲辰壬甲寅癸——按戊己庚辛壬癸顺序配六甲</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">KP5·遁仪规律</span><h2>遁仪规律与易错点</h2><p class="para-anchored"><b class="lead">六甲遁仪的规律：</b>从甲子开始，按戊己庚辛壬癸的顺序，依次配给六甲。甲子遁戊、甲戌遁己、甲申遁庚、甲午遁辛、甲辰遁壬、甲寅遁癸。这个顺序与地盘排干的顺序一致，是奇门排盘的底层规律。</p><p class="para-anchored">最易错的是甲申遁庚——学生常误记为甲申遁辛，因为下意识按天干原序（甲乙丙丁戊己庚辛壬癸）去配，但实际是按戊己庚辛壬癸的六仪序配。记住：甲申对应的是庚，不是辛。</p><div class="callout blue"><div class="ci">⚠️</div><div class="cb">甲申遁庚非遁辛！按戊己庚辛壬癸序配六甲，非按天干原序。</div></div><ul class='steps-list'><li>甲子遁戊 ✓</li><li>甲申遁庚 ✓（非辛）</li><li>甲寅遁癸 ✓（非壬）</li></ul><div class="sum-box">按戊己庚辛壬癸序配六甲，非按天干原序</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">KP6·三奇制庚</span><h2>三奇制庚：乙合·丙克·丁克</h2><div class="tbl-wrap"><table class="dt"><tr><th>三奇</th><th>制庚方式</th><th>取象</th><th>力度</th></tr><tr><td>乙</td><td>合庚化金</td><td>夫妻合好</td><td>柔</td></tr><tr><td>丙</td><td>克庚火克金</td><td>权威压制</td><td>刚</td></tr><tr><td>丁</td><td>克庚火克金</td><td>柔中制刚</td><td>中</td></tr></table></div><p><b class="lead">庚为最凶之干，白虎本位，代表刑伤、阻碍、敌对。</b>三奇制庚是奇门中化解庚凶的三种方式，也是三奇价值的核心体现。</p><p>乙合庚：乙庚合化金，夫妻合好之象，以柔合制刚。丙克庚：丙火克庚金，权威压制之象，以刚克刚。丁克庚：丁火克庚金，柔中制刚之象，以阴柔克刚。三种制法力度不同：丙克最刚，乙合最柔，丁克居中。</p></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">AI融入·分类器</span><h2>AI分类器Prompt模板</h2><p><b class="lead">以下是本课AI分类器的完整Prompt。</b>你可以把这个Prompt粘贴到任何大模型中，让它扮演干支分类器。注意Prompt中明确要求'不确定时填待查而非编造'——这是防止AI幻觉的关键约束。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲干支分类器。用户输入任意天干或地支，你必须返回JSON：
+{"符号":"X","类别":"天干/地支","方位":"X方","五行":"X","阴阳":"阳/阴","合":"X合X化X","冲":"X冲X","旬空":"属甲X旬空X X"}
+规则：
+1. 天干五合：甲己土/乙庚金/丙辛水/丁壬木/戊癸火
+2. 天干四冲：甲庚/乙辛/丙壬/丁癸（戊己无冲）
+3. 地支六冲：子午/丑未/寅申/卯酉/辰戌/巳亥
+4. 地支六合：子丑土/寅亥木/卯戌火/辰酉金/巳申水/午未土
+5. 六甲旬空：甲子空戌亥/甲戌空申酉/甲申空午未/甲午空辰巳/甲辰空寅卯/甲寅空子丑
+6. 六甲遁仪：甲子遁戊/甲戌遁己/甲申遁庚/甲午遁辛/甲辰遁壬/甲寅遁癸
+若信息不适用某字段，填"无"。必须准确，不确定时填"待查"而非编造。</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">自测·干支体系</span><h2>干支体系自测（5题）</h2><div class='quiz-q'><p><b>Q1. 甲己合化什么五行？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 木</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 土</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 金</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 火</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 甲己合化土。口诀：甲己合土乙庚金，丙辛合水丁壬木，戊癸合火。</div></div><div class='quiz-q'><p><b>Q2. 甲申遁于哪一仪？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,1)'>A. 辛</div><div class='quiz-opt' onclick='reveal(this,1,1,1)'>B. 庚</div><div class='quiz-opt' onclick='reveal(this,1,2,1)'>C. 壬</div><div class='quiz-opt' onclick='reveal(this,1,3,1)'>D. 癸</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 甲申遁庚。按戊己庚辛壬癸序配六甲：甲子戊甲戌己甲申庚甲午辛甲辰壬甲寅癸。</div></div><div class='quiz-q'><p><b>Q3. 丙寅属何旬，空何支？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,0)'>A. 甲子旬空戌亥</div><div class='quiz-opt' onclick='reveal(this,2,1,0)'>B. 甲戌旬空申酉</div><div class='quiz-opt' onclick='reveal(this,2,2,0)'>C. 甲申旬空午未</div><div class='quiz-opt' onclick='reveal(this,2,3,0)'>D. 甲寅旬空子丑</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 丙寅是第3位，属甲子旬(1-10)，甲子旬空戌亥。</div></div><div class='quiz-q'><p><b>Q4. 以下哪组是地支六合？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,1)'>A. 子午合</div><div class='quiz-opt' onclick='reveal(this,3,1,1)'>B. 子丑合</div><div class='quiz-opt' onclick='reveal(this,3,2,1)'>C. 寅申合</div><div class='quiz-opt' onclick='reveal(this,3,3,1)'>D. 卯酉合</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 子丑合土。子午是冲不是合，寅申是冲，卯酉是冲。六合：子丑/寅亥/卯戌/辰酉/巳申/午未。</div></div><div class='quiz-q'><p><b>Q5. 庚加乙与乙加庚，哪个为吉？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 乙加庚吉</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 庚加乙吉</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 两者皆吉</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 两者皆凶</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 庚加三奇为吉格（客制主），三奇加庚为凶格。庚加乙=庚制乙=吉，乙加庚=乙受庚制=凶。</div></div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">找AI的错</span><h2>找AI的错：干支表3处错误</h2><div class="case-card"><div class="case-head">AI生成的干支属性表（埋了3处错）</div><p class="case-body">以下是AI分类器输出的干支属性表，但里面故意埋了3处错误。请你用刚学的知识把它们找出来——这是本课的'找AI的错'环节，训练你对AI输出的鉴别力。</p><p class="case-body">错误1：表中写'乙辛合'——错！乙辛是冲不是合，乙庚才合。错误2：表中写'子午合'——错！子午是冲不是合，子丑才合。错误3：表中写'甲申遁辛'——错！甲申遁庚非遁辛，这是最易错的遁仪项。</p><div class="case-metrics"><div class="cm"><div class="cm-v">3</div><div class="cm-l">处错误</div></div><div class="cm"><div class="cm-v">100%</div><div class="cm-l">应检出率</div></div></div></div><p class="hl">3处错：乙辛合(应冲)、子午合(应冲)、甲申遁辛(应遁庚)</p></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">本课数据</span><h2>干支符号体系数据总览</h2><p><b class="lead">本课建立的干支符号体系，是后续所有奇门排盘和判断的基础。</b>这些符号和关系不是任意规定的，而是源自古代天文历法和五行哲学的严密推演。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">10</div><div class="kl">天干</div><div class="kd">甲乙丙丁戊己庚辛壬癸</div></div><div class="kpi blue"><div class="kv">12</div><div class="kl">地支</div><div class="kd">子丑寅卯辰巳午未申酉戌亥</div></div><div class="kpi blue"><div class="kv">60</div><div class="kl">甲子</div><div class="kd">六甲旬各10干支</div></div><div class="kpi blue"><div class="kv">6</div><div class="kl">旬空</div><div class="kd">每旬空2地支</div></div><div class="kpi blue"><div class="kv">9</div><div class="kl">盘面符号</div><div class="kd">三奇3+六仪6(甲遁)</div></div></div><div class="sum-box">10干+12支+60甲子+6旬空+9盘面符号=完整符号体系</div></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">课堂讨论</span><h2>讨论：为什么甲要遁藏？</h2><p>这个问题触及奇门遁甲的哲学内核。一种解释是军事隐喻：甲是统帅，统帅不亲自上阵，隐于六仪（六支部队）背后指挥，这样统帅安全又能调度全局。另一种解释是数理必然：10天干配9宫，必然有1干不现，甲作为首干被选为遁藏者。</p><p>你倾向哪种解释？还是认为两者兼而有之？请结合六甲遁仪的口诀，谈谈'遁'字在奇门中的意义。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">为什么甲遁藏而非其他干遁藏？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">如果乙遁藏，奇门体系会如何变化？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">'遁'是隐藏还是替代？甲与所遁之仪是什么关系？</div></div></div><p class="hl">甲遁既是军事隐喻，也是10配9的数理必然</p></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">本课总结</span><h2>总结：干支符号体系已建立</h2><ul class="steps-list"><li>十天干：方位阴阳+五合四冲（戊己中央无冲）</li><li>十二地支：九宫对应+六冲六合三合局三刑六害</li><li>六十甲子：六甲旬空（空亡指地支空非天干空）</li><li>三奇六仪：乙丙丁+戊己庚辛壬癸，甲遁藏不现</li><li>六甲遁仪：甲子戊甲戌己甲申庚甲午辛甲辰壬甲寅癸</li><li>三奇制庚：乙合庚/丙克庚/丁克庚，庚加三奇吉三奇加庚凶</li></ul><div class="sum-box">核心口诀：甲子遁戊甲戌己甲申遁庚甲午辛甲辰壬甲寅癸</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第3课《九星八门八神——天地人神四盘解析》</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>产出：干支符号体系表 → 第3课输入：星门神落宫的符号基础</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位同学好，欢迎来到奇门遁甲AI+融合版课程的第二课。今天这节课的主题是\"天干地支与三奇六仪——奇门的符号语言\"。五十分钟的时间里，我们要把奇门遁甲最底层的符号体系完整建立起来。这节课的AI角色是\"分类器\"——你输入任意一个天干或地支，AI秒回它的方位、阴阳、合冲属性。本课的产出是一张完整的干支符号体系表，它将作为第三课\"九星八门八神落宫\"的符号基础输入。准备好了吗？我们开始。"}, {"idx": 1, "title": "本课地图", "text": "先看本课地图。我们沿着六步走：第一站十天干，讲方位阴阳加五合四冲；第二站十二地支，讲九宫对应加六冲六合三合局；第三站六十甲子，讲循环原理和六甲旬空；第四站三奇六仪，讲乙丙丁和戊己庚辛壬癸；第五站六甲遁仪，讲甲子遁戊到甲寅遁癸；第六站三奇制庚，讲乙合丙克丁克庚三种制法。AI今天扮演干支分类器做查表苦力活，但请注意AI也会犯错，课末我们要找出它埋的三处错。甲遁六仪就是\"遁甲\"二字的字面来源，这是本课的灵魂。"}, {"idx": 2, "title": "开场钩子", "text": "我先抛一个问题：为什么奇门遁甲叫\"遁甲\"？甲藏到哪里去了？这个问题看似简单，却直指奇门最核心的设计思想。甲是十干之首、统帅之位，在奇门中隐遁于戊己庚辛壬癸六仪之下，从不直接出现在盘面上。盘面上你看到的永远是六仪和三奇乙丙丁这九个符号，甲只通过\"甲子遁戊、甲戌遁己\"这样的对应关系间接体现。理解了这一点，你就明白了为什么奇门排盘首先要排\"戊己庚辛壬癸丁丙乙\"这九个符号——因为甲不在其中，甲已经遁了。"}, {"idx": 3, "title": "十天干总览", "text": "进入第一站，十天干。甲乙丙丁戊己庚辛壬癸，它们首先携带三重属性：方位、五行、阴阳。方位五行遵循\"东方木南方火西方金北方水中央土\"的空间布局，每方配两干，前干为阳后干为阴。甲乙东方木，丙丁南方火，庚辛西方金，壬癸北方水，戊己中央土。请大家跟我念一遍这个口诀，这是开场必念的。特别注意戊己居中央，无方位对宫，因此无冲——这是学生最常忽略的细节，经常有人误把戊癸冲当冲，但那是合不是冲。"}, {"idx": 4, "title": "天干五合与四冲", "text": "天干五合是相邻两干合化为一行：甲己合化土、乙庚合化金、丙辛合化水、丁壬合化木、戊癸合化火。注意合化后的五行与原干五行不同——甲本木己本土，合化后为土。五合的序数和都是11：1加6、2加7、3加8、4加9、5加10。天干四冲是方位相对的两干相冲：甲庚冲东方木对西方金、乙辛冲、丙壬冲、丁癸冲。四冲的序数差都是5。合与冲的区别要记牢：合是相邻化一行，冲是对宫相克。戊己中央无对宫所以无冲，这点再强调一次。"}, {"idx": 5, "title": "AI分类器演示", "text": "现在请AI分类器登场。它的任务是：你输入任意一个天干或地支，它返回完整的属性JSON——方位、五行、阴阳、合、冲、旬空。比如输入\"丙\"，AI返回南方、火、阳干、丙辛合水、丙壬冲、甲子旬空戌亥。这是本课的AI融入环节，用机器做查表的苦力活，把人脑解放出来去理解背后的逻辑。但请保持警惕：AI分类器在旬空字段最容易出错，因为它需要先判断该干支属于六甲中哪一旬再查空亡表。我们稍后会故意给它一张埋了三处错的表来测试你的鉴别力。"}, {"idx": 6, "title": "十二地支与九宫对应", "text": "进入第二站，十二地支配九宫。子丑寅卯辰巳午未申酉戌亥，要配到九宫上。由于12除以9除不尽，必然一宫多支。实际配法是：四正宫坎离震兑各配一支，四维宫乾坤艮巽各配两支，中五宫不配地支。记忆口诀：子坎1、丑寅艮8、卯震3、辰巳巽4、午离9、未申坤2、酉兑7、戌亥乾6。四正宫配子午卯酉是四桃花，四维宫配两支一阳一阴。这个对应关系是后续排盘的基础，必须记牢。"}, {"idx": 7, "title": "地支六冲与六合", "text": "地支六冲是方位对宫相冲：子午冲、丑未冲、寅申冲、卯酉冲、辰戌冲、巳亥冲。六合是合化五行：子丑合土、寅亥合木、卯戌合火、辰酉合金、巳申合水、午未合土。关键易错点来了：六合与六冲不互为逆。例如子午冲，但子与午不合；子丑合，但子与丑不冲。合与冲是两套完全独立的关系，不能混为一谈。我见过太多学生把子午合当成合，那是冲！子丑才是合。这个错误一定要避免。"}, {"idx": 8, "title": "三合局与三刑六害", "text": "三合局是三个地支合化一行，必须三支齐全才成局：申子辰合水局、亥卯未合木局、寅午戌合火局、巳酉丑合金局。三合局的力量远大于六合，是奇门判断中的重要依据。三刑主刑伤：寅巳申相刑、丑戌未相刑、子卯相刑。六害主暗害：子未害、丑午害、寅巳害、卯辰害、申亥害、酉戌害。三刑六害在奇门中不如冲合常用，但高级判断会涉及，先有个印象。记住三合局三支必须齐全，缺一不成局。"}, {"idx": 9, "title": "六十甲子循环与六甲旬空", "text": "进入第三站，六十甲子。六十甲子是天干地支依次配对的循环，10天干12地支最小公倍数60，所以60为一个完整周期。每10个干支为一旬，由六甲领头，故称六甲旬。每旬10个干支但地支有12个，所以每旬必空2个地支——这就是旬空，也叫空亡。空亡的两个地支在该旬中不出现，在奇门判断中表示落空无力。六甲旬空依次是：甲子旬空戌亥、甲戌旬空申酉、甲申旬空午未、甲午旬空辰巳、甲辰旬空寅卯、甲寅旬空子丑。"}, {"idx": 10, "title": "旬空查表实操", "text": "来实操一下旬空查表。以丙寅为例：丙寅是六十甲子第3位，甲子1、乙丑2、丙寅3，属甲子旬即1到10，甲子旬空戌亥，所以丙寅空戌亥。再练一例辛巳：辛巳排第18位，属甲戌旬即11到20，甲戌旬空申酉，所以辛巳空申酉。注意空亡指地支空亡，戌亥、申酉这些是地支，不是天干空亡——这是学生最常犯的错误。戌亥空是说这两个地支不出现，不是说戊己空。戊己是天干，戌亥是地支，别搞混了。"}, {"idx": 11, "title": "三奇六仪定义", "text": "进入第四站，三奇六仪。三奇是乙、丙、丁，分别称日奇、月奇、星奇。六仪是戊、己、庚、辛、壬、癸。三奇加六仪共九个符号，配九宫，构成奇门排盘的干支基础。那甲呢？甲遁藏不现。甲是十干之首、统帅之位，在奇门中隐遁于六仪之下，从不直接出现在盘面上。这就是遁甲的本义——甲遁了，你看到的只有三奇六仪九个符号。庚在六仪中特别标注为最凶之干，是白虎本位，后面三奇制庚就是针对它。"}, {"idx": 12, "title": "六甲遁仪口诀", "text": "六甲遁仪是本课的核心口诀，请大家跟我念：甲子遁戊、甲戌遁己、甲申遁庚、甲午遁辛、甲辰遁壬、甲寅遁癸。六甲对应六仪，从甲子起戊，按戊己庚辛壬癸顺序配六甲。这个口诀必须背熟，它是排盘时确定甲在哪一仪的依据。规律很清晰：甲子配戊、甲戌配己、甲申配庚、甲午配辛、甲辰配壬、甲寅配癸，一一对应，不重不漏。甲本身从不直接出现在盘面上，只通过所遁之仪体现。"}, {"idx": 13, "title": "遁仪规律与易错点", "text": "六甲遁仪的规律再强调一遍：从甲子开始，按戊己庚辛壬癸的顺序，依次配给六甲。最易错的是甲申遁庚——学生常误记为甲申遁辛，因为下意识按天干原序甲乙丙丁戊己庚辛壬癸去配，但实际是按戊己庚辛壬癸的六仪序配。记住甲申对应的是庚不是辛。同理甲寅遁癸不是遁壬。这个错误在考试和实操中极其常见，我在找AI的错环节也埋了这一处。按戊己庚辛壬癸序配六甲，非按天干原序，这句话请默念三遍。"}, {"idx": 14, "title": "三奇制庚", "text": "进入第六站，三奇制庚。庚为最凶之干，白虎本位，代表刑伤、阻碍、敌对。三奇制庚是奇门中化解庚凶的三种方式，也是三奇价值的核心体现。乙合庚：乙庚合化金，夫妻合好之象，以柔合制刚。丙克庚：丙火克庚金，权威压制之象，以刚克刚。丁克庚：丁火克庚金，柔中制刚之象，以阴柔克刚。三种制法力度不同：丙克最刚，乙合最柔，丁克居中。关键主客区别：庚加三奇为吉格，三奇加庚为凶格，方向相反！"}, {"idx": 15, "title": "AI分类器Prompt模板", "text": "以下是本课AI分类器的完整Prompt模板，你可以粘贴到任何大模型中让它扮演干支分类器。Prompt中明确列出了天干五合、四冲、地支六冲六合、六甲旬空、六甲遁仪的所有规则，并要求AI返回结构化JSON。最关键的约束是最后一条：不确定时填\"待查\"而非编造。这是防止AI幻觉的核心手段——与其让AI猜一个可能错的答案，不如让它承认不知道。课后大家可以拿这个Prompt去测试不同大模型的准确率，看看哪个模型在干支分类上最可靠。"}, {"idx": 16, "title": "干支体系自测", "text": "现在做五道自测题。第一题甲己合化什么五行？答案土，口诀甲己合土。第二题甲申遁于哪一仪？答案庚，按戊己庚辛壬癸序配。第三题丙寅属何旬空何支？答案甲子旬空戌亥，丙寅是第3位属甲子旬。第四题以下哪组是地支六合？答案子丑合，子午是冲寅申是冲卯酉是冲。第五题庚加乙与乙加庚哪个为吉？答案庚加乙吉，因为庚加三奇为吉格客制主，三奇加庚为凶格。五题全对的同学举手，很好。"}, {"idx": 17, "title": "找AI的错", "text": "现在进入找AI的错环节。这是AI分类器输出的干支属性表，但里面故意埋了三处错误。第一处：表中写乙辛合——错！乙辛是冲不是合，乙庚才合。第二处：表中写子午合——错！子午是冲不是合，子丑才合。第三处：表中写甲申遁辛——错！甲申遁庚非遁辛，这是最易错的遁仪项。三处错误分别对应合冲混淆、合冲混淆、遁仪顺序三类典型错误。训练你对AI输出的鉴别力，是AI+课程的重要目标——AI是工具不是权威，你必须有能力判断它对不对。"}, {"idx": 18, "title": "干支符号体系数据总览", "text": "来看本课数据总览。10个天干甲乙丙丁戊己庚辛壬癸，12个地支子丑寅卯辰巳午未申酉戌亥，60个甲子六甲旬各10干支，6组旬空每旬空2地支，9个盘面符号三奇3加六仪6甲遁藏。这些数字不是孤立的，它们构成一个完整的符号体系：10干配12支生成60甲子，60甲子分6旬每旬空2支，9个盘面符号配9宫。这套体系是后续所有奇门排盘和判断的基础，今天建立起来，后面就站在这个地基上往上建。"}, {"idx": 19, "title": "讨论——为什么甲要遁藏", "text": "讨论题：为什么甲要遁藏？这个问题触及奇门遁甲的哲学内核。一种解释是军事隐喻：甲是统帅，统帅不亲自上阵，隐于六仪六支部队背后指挥，统帅安全又能调度全局。另一种解释是数理必然：10天干配9宫，必然有1干不现，甲作为首干被选为遁藏者。你倾向哪种解释？还是认为两者兼而有之？请结合六甲遁仪口诀，谈谈遁字在奇门中的意义。遁是隐藏还是替代？甲与所遁之仪是什么关系？课后请把这个思考写入学习日志。"}, {"idx": 20, "title": "本课总结", "text": "总结本课六大收获：第一十天干方位阴阳加五合四冲，戊己中央无冲；第二十二地支九宫对应加六冲六合三合局三刑六害；第三六十甲子六甲旬空，空亡指地支空非天干空；第四三奇六仪乙丙丁加戊己庚辛壬癸甲遁藏不现；第五六甲遁仪甲子戊甲戌己甲申庚甲午辛甲辰壬甲寅癸；第六三奇制庚乙合丙克丁克，庚加三奇吉三奇加庚凶。核心口诀再念一遍：甲子遁戊甲戌己甲申遁庚甲午辛甲辰壬甲寅癸。下节课我们进入九星八门八神天地人神四盘解析，本课的干支符号体系表就是下节课星门神落宫的符号基础。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
