@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">🌟</div>
+    <span class="tag">第3课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">九星八门八神</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">天地人神四盘解析——星主天时，门主人和，神主神助</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：四盘要素全表 → 第4课输入：排盘的天地人神四层</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">课程导览</span><h2>本课地图：四盘25要素全解析</h2><p><b class="lead">奇门遁甲有天地人神四盘：</b>天盘九星主天时，人盘八门主人和，神盘八神主神助，地盘干支主地利。为什么是9星8门8神而不是一样多？因为四盘分工不同——天盘配九宫故9星，人盘用八宫（中5无门）故8门，神盘随值符排故8神。</p><p>本课我们逐个解析这25个要素的本宫、五行、阴阳、吉凶、取象，并讲解九星旺相休囚废、伏吟反吟、门宫生克、八神排列等核心规则。AI今天扮演'四盘说书人'，把星门神编成故事来讲，让枯燥的符号变成鲜活的角色。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">九星</div><div class="gb">9星配9宫·天盘</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">旺相休囚废</div><div class="gb">星落宫5状态</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">伏吟反吟</div><div class="gb">停滞与反复</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">八门</div><div class="gb">8门配8宫·人盘</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">门宫生克</div><div class="gb">和义迫制比</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">八神</div><div class="gb">8神·神盘·顺逆排</div></div></div><div class="sum-box">天盘9星+人盘8门+神盘8神=25要素，四盘分工不同</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">开场钩子</span><div class="quote-big"><div class="qi">❝</div><div class="qt">天盘星主天时，人盘门主人和，神盘神主神助，地盘干主地利。</div><div class="qs">奇门四盘分工</div></div><p><b class="lead">为什么是9星8门8神？</b>因为四盘各管一摊：天盘配九宫所以9星，人盘用八宫（中5宫无门）所以8门，神盘随值符排所以8神。这不是随便定的数字，而是九宫结构和功能分工的自然结果。</p><p>今天AI扮演说书人，把九星八门八神编成'天宫朝廷'的故事——天蓬是猛将、天任是忠臣、天芮是奸臣、值符是统领、白虎是刑官。让符号变成角色，你就记住了。</p><div class="sum-box">9星8门8神是九宫结构和功能分工的自然结果</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">KP1·九星</span><h2>九星本宫与属性：九位天神各守一宫</h2><p class="para-anchored"><b class="lead">九星配九宫，每星一本宫。</b>天蓬星守坎1宫属水阳大凶，性格胆大妄为，是九星中最凶的。天任星守艮8宫属土阳大吉，忠厚诚实。天冲星守震3宫属木阳小吉，冲动急躁。天辅星守巽4宫属木阳大吉，文雅斯文，主文化教育。</p><p class="para-anchored"><b class="lead">天英星守离9宫属火阴中平，热情奔放。</b>天芮星守坤2宫属土阴大凶，阴险贪私，是排盘中最怕遇到的凶星（也主病）。天柱星守兑7宫属金阴小凶，好斗破坏。天心星守乾6宫属金阴大吉，精明能干，主医疗。天禽星守中5宫属土阳大吉，中正平和，排盘时常寄坤2宫。</p><div class="callout blue"><div class="ci">⚠️</div><div class="cb">天禽星寄中5宫，排盘时常寄坤2宫与天芮同宫——这是学生最易忽略的细节。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>九星</th><th>本宫</th><th>五行</th><th>阴阳</th><th>吉凶</th><th>取象</th></tr><tr><td>天蓬</td><td>坎1</td><td>水</td><td>阳</td><td>大凶</td><td>胆大妄为</td></tr><tr><td>天任</td><td>艮8</td><td>土</td><td>阳</td><td>大吉</td><td>忠厚诚实</td></tr><tr><td>天冲</td><td>震3</td><td>木</td><td>阳</td><td>小吉</td><td>冲动急躁</td></tr><tr><td>天辅</td><td>巽4</td><td>木</td><td>阳</td><td>大吉</td><td>文雅斯文</td></tr><tr><td>天英</td><td>离9</td><td>火</td><td>阴</td><td>中平</td><td>热情奔放</td></tr><tr><td>天芮</td><td>坤2</td><td>土</td><td>阴</td><td>大凶</td><td>阴险贪私</td></tr><tr><td>天柱</td><td>兑7</td><td>金</td><td>阴</td><td>小凶</td><td>好斗破坏</td></tr><tr><td>天心</td><td>乾6</td><td>金</td><td>阴</td><td>大吉</td><td>精明能干</td></tr><tr><td>天禽</td><td>中5</td><td>土</td><td>阳</td><td>大吉</td><td>中正平和</td></tr></table></div><div class="sum-box">四吉星：天任天辅天心天禽；两大凶：天蓬天芮</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">KP2·旺相休囚废</span><h2>九星旺相休囚废：星落宫的五种状态</h2><p class="para-anchored"><b class="lead">九星落宫有五种旺衰状态，判定依据是星与宫的五行生克关系。</b>旺：落我生之宫，星生宫，星气最旺。相：落同行之宫，星与宫同五行，次旺。休：落我克之宫，星克宫，星气休息。囚：落克我之宫，宫克星，星气被困。废：落生我之宫，宫生星，星气废弃不用。</p><p class="para-anchored">举例：天蓬星属水，落震3宫（木），水生木=我生之宫=旺。落坎1宫（水），同行=相。落离9宫（火），水克火=我克之宫=休。落坤2宫（土），土克水=克我之宫=囚。落乾6宫（金），金生水=生我之宫=废。</p><div class="callout blue"><div class="ci">⚠️</div><div class="cb">易错：'废'是落生我之宫（宫生星），不是落我生之宫（星生宫）。方向相反！</div></div><div class="tbl-wrap"><table class="dt"><tr><th>状态</th><th>条件</th><th>星气</th></tr><tr><td>旺</td><td>落我生之宫</td><td>最旺</td></tr><tr><td>相</td><td>落同行之宫</td><td>次旺</td></tr><tr><td>休</td><td>落我克之宫</td><td>休息</td></tr><tr><td>囚</td><td>落克我之宫</td><td>被困</td></tr><tr><td>废</td><td>落生我之宫</td><td>废弃</td></tr></table></div><div class="sum-box">口诀：旺我生·相同行·休我克·囚克我·废生我</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">KP3·伏吟反吟</span><h2>伏吟与反吟：停滞与反复</h2><p class="para-anchored"><b class="lead">伏吟是星回到本宫，主停滞、不动、事情拖延。</b>反吟是星到对冲之宫，主反复、动荡、事情波折。这两种状态都是排盘时要特别关注的异常情况。</p><p class="para-anchored"><b class="lead">以天蓬星为例：</b>本宫坎1，落坎1就是伏吟，落离9（坎的对冲宫）就是反吟。伏吟反吟的规律：六甲时星门伏吟，六癸时八门伏吟。遇到伏吟多主事情不动，要等；遇到反吟多主事情反复，要防波折。</p><div class="tbl-wrap"><table class="dt"><tr><th>状态</th><th>条件</th><th>主事</th></tr><tr><td>伏吟</td><td>星回本宫</td><td>停滞拖延</td></tr><tr><td>反吟</td><td>星到对冲</td><td>反复波折</td></tr></table></div><div class="sum-box">六甲时星门伏吟，六癸时八门伏吟</div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">KP4·八门</span><h2>八门本宫与属性：八道城门各有吉凶</h2><p class="para-anchored"><b class="lead">八门配八宫，中5宫无门。</b>开门守乾6宫属金大吉，主开通事业。休门守坎1宫属水大吉，主休息安养。生门守艮8宫属土大吉，主生存财运。这三门是三吉门，遇之主吉。</p><p class="para-anchored"><b class="lead">伤门守震3宫属木大凶，主伤害疾病。</b>死门守坤2宫属土大凶，主死亡丧事。惊门守兑7宫属金小凶，主惊恐官非。这三门是三凶门。杜门守巽4宫属木小凶，主堵塞隐藏。景门守离9宫属火中平，主文书考试。杜景两门中性偏凶偏平。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">三吉门：开休生（遇之主吉）；三凶门：伤死惊（遇之主凶）；杜景中平。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>八门</th><th>本宫</th><th>五行</th><th>吉凶</th><th>取象</th></tr><tr><td>开门</td><td>乾6</td><td>金</td><td>大吉</td><td>开通事业</td></tr><tr><td>休门</td><td>坎1</td><td>水</td><td>大吉</td><td>休息安养</td></tr><tr><td>生门</td><td>艮8</td><td>土</td><td>大吉</td><td>生存财运</td></tr><tr><td>伤门</td><td>震3</td><td>木</td><td>大凶</td><td>伤害疾病</td></tr><tr><td>杜门</td><td>巽4</td><td>木</td><td>小凶</td><td>堵塞隐藏</td></tr><tr><td>景门</td><td>离9</td><td>火</td><td>中平</td><td>文书考试</td></tr><tr><td>死门</td><td>坤2</td><td>土</td><td>大凶</td><td>死亡丧事</td></tr><tr><td>惊门</td><td>兑7</td><td>金</td><td>小凶</td><td>惊恐官非</td></tr></table></div><div class="sum-box">三吉门开休生，三凶门伤死惊，杜景中平</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">KP5·门宫生克</span><h2>门宫生克：和义迫制比五关系</h2><div class="tbl-wrap"><table class="dt"><tr><th>关系</th><th>条件</th><th>影响</th></tr><tr><td>和</td><td>门生宫</td><td>温和</td></tr><tr><td>义</td><td>宫生门</td><td>得助</td></tr><tr><td>迫</td><td>门克宫</td><td>吉门减吉</td></tr><tr><td>制</td><td>宫克门</td><td>凶门减凶</td></tr><tr><td>比</td><td>门=宫</td><td>比和</td></tr></table></div><p><b class="lead">门与所落宫的生克关系有五种：</b>和=门生宫，义=宫生门，迫=门克宫，制=宫克门，比=门与宫同五行。这五关系直接影响门的吉凶发挥。</p><p><b class="lead">核心原则：</b>吉门受迫减吉，凶门受制减凶。意思是吉门如果去克宫（迫），吉力减弱；凶门如果被宫克（制），凶力也减弱。这是门宫生克的实用价值——不是门吉就一定吉，还要看门与宫的关系。</p></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">KP6·八神</span><h2>八神属性：八位侍卫随值符而排</h2><p class="para-anchored"><b class="lead">八神依次为值符、腾蛇、太阴、六合、白虎、玄武、九地、九天。</b>值符属土阳，是首领百神之主，大吉。腾蛇属火阴，主虚诈惊恐。太阴属金阴，主阴佑隐藏。六合属木阳，主和合婚姻。</p><p class="para-anchored"><b class="lead">白虎属金阳，主凶恶刑伤。</b>玄武属水阴，主盗窃暗昧。九地属土阴，主牢固防守。九天属金阳，主威悍出击。八神中值符最吉，白虎玄武最凶。排列规律：阳遁顺排（值符→腾蛇→太阴→六合→白虎→玄武→九地→九天），阴遁逆排。</p><div class="tbl-wrap"><table class="dt"><tr><th>八神</th><th>五行</th><th>阴阳</th><th>吉凶</th><th>取象</th></tr><tr><td>值符</td><td>土</td><td>阳</td><td>大吉</td><td>首领百神之主</td></tr><tr><td>腾蛇</td><td>火</td><td>阴</td><td>凶</td><td>虚诈惊恐</td></tr><tr><td>太阴</td><td>金</td><td>阴</td><td>吉</td><td>阴佑隐藏</td></tr><tr><td>六合</td><td>木</td><td>阳</td><td>吉</td><td>和合婚姻</td></tr><tr><td>白虎</td><td>金</td><td>阳</td><td>凶</td><td>凶恶刑伤</td></tr><tr><td>玄武</td><td>水</td><td>阴</td><td>凶</td><td>盗窃暗昧</td></tr><tr><td>九地</td><td>土</td><td>阴</td><td>吉</td><td>牢固防守</td></tr><tr><td>九天</td><td>金</td><td>阳</td><td>吉</td><td>威悍出击</td></tr></table></div><div class="sum-box">阳遁顺排：值符→腾蛇→太阴→六合→白虎→玄武→九地→九天；阴遁逆排</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">KP6·八神排列</span><h2>八神排列规律：阳遁顺排阴遁逆排</h2><ol class="steps-list"><li>阳遁：值符→腾蛇→太阴→六合→白虎→玄武→九地→九天（顺排）</li><li>阴遁：值符→九天→九地→玄武→白虎→六合→太阴→腾蛇（逆排）</li><li>值符永远第一，其后按阳顺阴逆排列</li><li>八神随值符落宫而排，值符在哪宫，八神从该宫起排</li><li>排神盘时先定值符落宫，再按阳顺阴逆排八神</li></ol><div class="sum-box">值符永远排第一，阳遁顺阴遁逆，从值符落宫起排</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">AI融入·说书人</span><h2>AI说书人Prompt：四盘故事化</h2><p><b class="lead">以下是本课AI说书人的完整Prompt。</b>让AI把九星八门八神编成'天宫朝廷'故事，每个星门神拟人化，体现其吉凶性格。这种故事化教学能让枯燥的符号表变成鲜活的角色记忆——你记不住天芮星属土阴大凶，但能记住'天芮是朝中奸臣，阴险贪私'。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲四盘说书人。请把九星八门八神编成一个'天宫朝廷'的故事：
+
+九星是九位天神：
+- 天蓬=猛将（坎1水阳大凶，胆大妄为）
+- 天任=忠臣（艮8土阳大吉，忠厚诚实）
+- 天芮=奸臣（坤2土阴大凶，阴险贪私）
+- 天辅=文臣（巽4木阳大吉，文雅斯文）
+- 天心=良医（乾6金阴大吉，精明能干）
+- 天英=谏官（离9火阴中平，热情奔放）
+- 天冲=武将（震3木阳小吉，冲动急躁）
+- 天柱=破坏者（兑7金阴小凶，好斗破坏）
+- 天禽=君主（中5土阳大吉，中正平和）
+
+八门是八道城门：开门=正门/休门=安养门/生门=财门/伤门=伤门/杜门=暗门/景门=文门/死门=丧门/惊门=惊门
+
+八神是八位侍卫：值符=统领/腾蛇=诈客/太阴=暗卫/六合=和事佬/白虎=刑官/玄武=盗贼/九地=守将/九天=先锋
+
+要求：故事连贯，体现各星门神的吉凶性格，500字左右。</div></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">自测·四盘要素</span><h2>四盘要素自测（5题）</h2><div class='quiz-q'><p><b>Q1. 天芮星的本宫和吉凶是？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 坤2宫大吉</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 坤2宫大凶</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 艮8宫大吉</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 离9宫中平</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 天芮星守坤2宫，属土阴大凶，阴险贪私，是排盘中最怕遇到的凶星，也主病。</div></div><div class='quiz-q'><p><b>Q2. 天蓬星落乾6宫（金）是何状态？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,3)'>A. 旺</div><div class='quiz-opt' onclick='reveal(this,1,1,3)'>B. 相</div><div class='quiz-opt' onclick='reveal(this,1,2,3)'>C. 囚</div><div class='quiz-opt' onclick='reveal(this,1,3,3)'>D. 废</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 天蓬属水，乾6属金，金生水=生我之宫=废。'废'是落生我之宫，非我生之宫。</div></div><div class='quiz-q'><p><b>Q3. 以下哪个是三吉门之一？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,2)'>A. 伤门</div><div class='quiz-opt' onclick='reveal(this,2,1,2)'>B. 死门</div><div class='quiz-opt' onclick='reveal(this,2,2,2)'>C. 生门</div><div class='quiz-opt' onclick='reveal(this,2,3,2)'>D. 惊门</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 三吉门：开休生。伤死惊是三凶门，杜景中平。</div></div><div class='quiz-q'><p><b>Q4. 门克宫称为什么关系？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,2)'>A. 和</div><div class='quiz-opt' onclick='reveal(this,3,1,2)'>B. 义</div><div class='quiz-opt' onclick='reveal(this,3,2,2)'>C. 迫</div><div class='quiz-opt' onclick='reveal(this,3,3,2)'>D. 制</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 迫=门克宫（吉门受迫减吉）。和=门生宫，义=宫生门，制=宫克门，比=同五行。</div></div><div class='quiz-q'><p><b>Q5. 阴遁时八神如何排列？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 顺排</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 逆排</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 随机排</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 只排值符</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 阴遁八神逆排：值符→九天→九地→玄武→白虎→六合→太阴→腾蛇。阳遁才顺排。</div></div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">找AI的错</span><h2>找AI的错：四盘故事3处错误</h2><div class="case-card"><div class="case-head">AI说书人讲的四盘故事（埋了3处错）</div><p class="case-body">AI说书人输出了一个四盘故事，但里面故意埋了三处错误。请你用刚学的知识找出它们——这是本课的'找AI的错'环节，训练你对AI输出的鉴别力。</p><p class="case-body">错误1：故事中说天芮星大吉——错！天芮星是坤2宫土阴大凶，阴险贪私，是最凶的星之一。错误2：故事中说死门大吉——错！死门是坤2宫土大凶，主死亡丧事。错误3：故事中说阴遁八神顺排——错！阴遁逆排，阳遁才顺排。</p><div class="case-metrics"><div class="cm"><div class="cm-v">3</div><div class="cm-l">处错误</div></div><div class="cm"><div class="cm-v">100%</div><div class="cm-l">应检出率</div></div></div></div><p class="hl">3处错：天芮大吉(应大凶)、死门大吉(应大凶)、阴遁顺排(应逆排)</p></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">补充·旺相推演</span><h2>旺相休囚废推演练习：天辅星落五宫</h2><p class="para-anchored"><b class="lead">以天辅星为例做一组推演。</b>天辅星属木，守巽4宫。落离9宫火，木生火是我生之宫为旺——天辅落离最旺，主文运亨通。落震3宫木，同行为相——次旺。落坤2宫土，木克土是我克之宫为休——星气休息。落乾6宫金，金克木是克我之宫为囚——星气被困。落坎1宫水，水生木是生我之宫为废——星气废弃不用。</p><p class="para-anchored"><b class="lead">推演方法对所有九星通用：</b>先查星五行，再查宫五行，最后按'旺我生·相同行·休我克·囚克我·废生我'来定状态。多练几次就能秒判。这个技能在排盘后判断星气强弱时天天用到。</p><div class="tbl-wrap"><table class="dt"><tr><th>落宫</th><th>宫五行</th><th>关系</th><th>状态</th></tr><tr><td>离9</td><td>火</td><td>木生火</td><td>旺</td></tr><tr><td>震3</td><td>木</td><td>同行</td><td>相</td></tr><tr><td>坤2</td><td>土</td><td>木克土</td><td>休</td></tr><tr><td>乾6</td><td>金</td><td>金克木</td><td>囚</td></tr><tr><td>坎1</td><td>水</td><td>水生木</td><td>废</td></tr></table></div><div class="sum-box">天辅星落离9宫最旺，落乾6宫最囚</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">补充·八门应用</span><h2>八门吉凶应用：问不同事遇不同门</h2><p class="para-anchored"><b class="lead">八门的吉凶在实际判断中因事而异。</b>三吉门：开门主事业，问工作遇开门大吉；休门主安养，问健康遇休门吉；生门主财运，问生意遇生门大吉。三凶门：伤门主伤害，问出行遇伤门防意外；死门主丧事，问病遇死门凶；惊门主官非，问诉讼遇惊门防败诉。</p><p class="para-anchored"><b class="lead">杜门主堵塞，问寻人遇杜门可能找不到。</b>景门主文书，问考试遇景门要看旺相，旺则吉衰则平。门义不同应用不同——问事业要找开门，问财运要找生门，不能拿开门去断财运。这是用神选择的基础，下节课排盘后就要用到。</p><ul class='steps-list'><li>问事业→看开门</li><li>问财运→看生门</li><li>问健康→看休门</li><li>问考试→看景门</li><li>问出行→怕伤门</li><li>问疾病→怕死门</li></ul><div class="sum-box">门义不同应用不同，用神选择要对应事项</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">补充·八神排列实操</span><h2>八神排列实操：值符落坎1宫为例</h2><p class="para-anchored"><b class="lead">假设阳遁，值符落坎1宫。</b>顺排：值符坎1、腾蛇坤2、太阴震3、六合巽4、白虎中5、玄武乾6、九地兑7、九天艮8。如果是阴遁，值符同样落坎1宫，逆排：值符坎1、九天坤2、九地震3、玄武巽4、白虎中5、六合乾6、太阴兑7、腾蛇艮8。</p><p class="para-anchored"><b class="lead">注意阳遁阴遁排列方向相反，但值符位置不变。</b>排神盘的关键是先定值符落宫，再按阳顺阴逆从值符宫起排。中5宫排到白虎或玄武时，实际寄坤2宫。这个实操下节课排盘七步骤时还要详细用到，这里先建立直觉。</p><div class="tbl-wrap"><table class="dt"><tr><th>顺序</th><th>阳遁落宫</th><th>阴遁落宫</th></tr><tr><td>值符</td><td>坎1</td><td>坎1</td></tr><tr><td>第二</td><td>坤2(腾蛇)</td><td>坤2(九天)</td></tr><tr><td>第三</td><td>震3(太阴)</td><td>震3(九地)</td></tr><tr><td>第四</td><td>巽4(六合)</td><td>巽4(玄武)</td></tr><tr><td>第五</td><td>中5(白虎)</td><td>中5(白虎)</td></tr><tr><td>第六</td><td>乾6(玄武)</td><td>乾6(六合)</td></tr><tr><td>第七</td><td>兑7(九地)</td><td>兑7(太阴)</td></tr><tr><td>第八</td><td>艮8(九天)</td><td>艮8(腾蛇)</td></tr></table></div><div class="sum-box">阳遁阴遁方向相反，值符位置不变，中5寄坤2</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">本课数据</span><h2>四盘要素数据总览</h2><p>本课解析的四盘25要素，加上各自的五行、阴阳、吉凶、取象属性，构成奇门排盘和判断的核心符号库。这些要素不是凭空捏造的，而是源于古代天文观测（九星对应北斗九星）、方位哲学（八门对应八方）、神灵信仰（八神对应八种神力）。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">9</div><div class="kl">九星</div><div class="kd">配9宫·天盘</div></div><div class="kpi blue"><div class="kv">8</div><div class="kl">八门</div><div class="kd">配8宫·人盘</div></div><div class="kpi blue"><div class="kv">8</div><div class="kl">八神</div><div class="kd">随值符排·神盘</div></div><div class="kpi blue"><div class="kv">5</div><div class="kl">旺相休囚废</div><div class="kd">星落宫5状态</div></div><div class="kpi blue"><div class="kv">5</div><div class="kl">和义迫制比</div><div class="kd">门宫生克5关系</div></div></div><div class="sum-box">9星+8门+8神=25要素，配5状态+5关系=完整四盘体系</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">四盘分工</span><h2>天地人神四盘分工一览</h2><p><b class="lead">奇门四盘各管一摊，分工明确又相互配合。</b>排盘时四盘叠在一起，判断时四盘综合考量——这就是奇门比六爻大六壬更复杂也更精密的原因。</p><div class="tl-v"><div class="tl-item"><div class="tt"><span class="tm">天盘</span>九星</div><div class="td">主天时·旺相休囚废定星气强弱</div></div><div class="tl-item"><div class="tt"><span class="tm">地盘</span>干支</div><div class="td">主地利·上节课已建立</div></div><div class="tl-item"><div class="tt"><span class="tm">人盘</span>八门</div><div class="td">主人和·门宫生克定门吉凶</div></div><div class="tl-item"><div class="tt"><span class="tm">神盘</span>八神</div><div class="td">主神助·阳顺阴逆排神序</div></div></div><div class="sum-box">天盘星+地盘干+人盘门+神盘神=四盘叠合判断</div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">课堂讨论</span><h2>讨论：吉门一定吉吗？</h2><p>门宫生克告诉我们：吉门受迫减吉，凶门受制减凶。这意味着开门虽然大吉，但如果开门落巽4宫（木），开门属金克巽木=迫，吉力就要打折。</p><p>那么问题来了：一个受迫的吉门，和一个受制的凶门，哪个更可用？讨论这个问题的意义在于——奇门判断不能只看单一符号的吉凶，必须看符号与环境的互动。这就像一个好员工放到不合适的岗位也会发挥不佳。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">吉门受迫后还能用吗？减吉多少？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">凶门受制后是否可以冒险用？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">四盘综合判断时，星吉门凶如何取舍？</div></div></div><p class="hl">吉门受迫减吉，凶门受制减凶——单看吉凶不够，要看互动</p></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">补充·四盘精密</span><h2>为什么奇门比六爻大六壬更精密</h2><p class="para-anchored"><b class="lead">奇门比六爻大六壬更精密，因为四盘叠合。</b>同一个宫位，竖向看有天盘星、地盘干、人盘门、神盘神四个要素，横向看有宫与宫的生克制化，再加上内外盘主远近快慢、月令定旺相休囚——信息量是单盘的好几倍。</p><p class="para-anchored"><b class="lead">六爻只有6个用神，大六壬12个，奇门有64个用神，就是因为四盘叠合提供了多维信息。</b>但这种精密也带来复杂——排盘要排四层，判断要综合四盘，学习曲线陡峭。不过只要把符号体系建好了，后面就是组合应用。今天建好四盘要素表，下节课就开始排盘。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">六爻6用神·大六壬12用神·奇门64用神——四盘叠合的信息量远超单盘。</div></div><div class="sum-box">四盘叠合=多维信息=64用神=更精密但更复杂</div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">本课总结</span><h2>总结：四盘要素全表已建立</h2><ul class="steps-list"><li>九星：9星配9宫，四吉天任天辅天心天禽，两大凶天蓬天芮</li><li>旺相休囚废：旺我生·相同行·休我克·囚克我·废生我</li><li>伏吟反吟：星回本宫停滞，星到对冲反复</li><li>八门：三吉开休生，三凶伤死惊，杜景中平</li><li>门宫生克：和义迫制比，吉门受迫减吉凶门受制减凶</li><li>八神：值符腾蛇太阴六合白虎玄武九地九天，阳遁顺排阴遁逆排</li></ul><div class="sum-box">核心：9星8门8神25要素+5状态+5关系=完整四盘体系</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第4课《定局起局——排盘七步骤》</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>产出：四盘要素全表 → 第4课输入：排盘的天地人神四层</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位同学好，欢迎来到奇门遁甲AI+融合版课程的第三课。今天这节课的主题是\"九星八门八神——天地人神四盘解析\"。五十分钟里，我们要把奇门四盘上的25个要素逐个解析清楚——9颗星、8道门、8位神，每个都有自己的本宫、五行、阴阳、吉凶和取象含义。这节课的AI角色是\"说书人\"，它会把星门神编成天宫朝廷的故事来讲。本课产出四盘要素全表，作为第四课排盘七步骤的输入。开始。"}, {"idx": 1, "title": "本课地图", "text": "先看本课地图。奇门有天地人神四盘：天盘九星主天时，人盘八门主人和，神盘八神主神助，地盘干支主地利。为什么是9星8门8神？因为四盘分工不同——天盘配九宫所以9星，人盘用八宫中5无门所以8门，神盘随值符排所以8神。我们沿六步走：九星体系、旺相休囚废、伏吟反吟、八门体系、门宫生克、八神体系。AI今天扮演说书人把星门神编成故事，让枯燥符号变成鲜活角色。课末照例找AI埋的三处错。"}, {"idx": 2, "title": "开场钩子", "text": "先抛个问题：奇门有天地人神四盘，天盘是九星，人盘是八门，神盘是八神——为什么是9星8门8神而不是一样多？答案是四盘各管一摊：天盘配九宫所以9星，人盘用八宫中5无门所以8门，神盘随值符排所以8神。这不是随便定的数字，而是九宫结构和功能分工的自然结果。今天AI扮演说书人，把九星八门八神编成天宫朝廷的故事——天蓬是猛将、天任是忠臣、天芮是奸臣、值符是统领、白虎是刑官。让符号变成角色，你就记住了。"}, {"idx": 3, "title": "九星本宫与属性", "text": "进入第一站，九星。九星配九宫，每星一本宫。天蓬星守坎1宫属水阳大凶，性格胆大妄为，是九星中最凶的。天任星守艮8宫属土阳大吉，忠厚诚实。天冲星守震3宫属木阳小吉，冲动急躁。天辅星守巽4宫属木阳大吉，文雅斯文，主文化教育。天英星守离9宫属火阴中平，热情奔放。天芮星守坤2宫属土阴大凶，阴险贪私，是排盘中最怕遇到的凶星也主病。天柱星守兑7宫属金阴小凶，好斗破坏。天心星守乾6宫属金阴大吉，精明能干，主医疗。天禽星守中5宫属土阳大吉，中正平和，排盘时常寄坤2宫与天芮同宫——这点特别要注意。"}, {"idx": 4, "title": "九星旺相休囚废", "text": "九星落宫有五种旺衰状态。旺：落我生之宫，星生宫，星气最旺。相：落同行之宫，星与宫同五行，次旺。休：落我克之宫，星克宫，星气休息。囚：落克我之宫，宫克星，星气被困。废：落生我之宫，宫生星，星气废弃不用。举例天蓬星属水，落震3宫木，水生木是我生之宫为旺。落坎1宫水，同行为相。落离9宫火，水克火是我克之宫为休。落坤2宫土，土克水是克我之宫为囚。落乾6宫金，金生水是生我之宫为废。最易错的是废——废是落生我之宫，宫生星，不是落我生之宫，方向相反！"}, {"idx": 5, "title": "伏吟与反吟", "text": "伏吟是星回到本宫，主停滞不动事情拖延。反吟是星到对冲之宫，主反复动荡事情波折。以天蓬星为例：本宫坎1，落坎1就是伏吟，落离9坎的对冲宫就是反吟。伏吟反吟的规律：六甲时星门伏吟，六癸时八门伏吟。遇到伏吟多主事情不动要等，遇到反吟多主事情反复要防波折。这两种状态都是排盘时要特别关注的异常情况，正常落宫不算伏吟也不算反吟。"}, {"idx": 6, "title": "八门本宫与属性", "text": "进入第四站，八门。八门配八宫，中5宫无门。开门守乾6宫属金大吉，主开通事业。休门守坎1宫属水大吉，主休息安养。生门守艮8宫属土大吉，主生存财运。这三门是三吉门，遇之主吉。伤门守震3宫属木大凶，主伤害疾病。死门守坤2宫属土大凶，主死亡丧事。惊门守兑7宫属金小凶，主惊恐官非。这三门是三凶门。杜门守巽4宫属木小凶，主堵塞隐藏。景门守离9宫属火中平，主文书考试。三吉门开休生，三凶门伤死惊，杜景中平，这个分类要记牢。"}, {"idx": 7, "title": "门宫生克", "text": "门与所落宫的生克关系有五种：和=门生宫，义=宫生门，迫=门克宫，制=宫克门，比=门与宫同五行。核心原则：吉门受迫减吉，凶门受制减凶。意思是吉门如果去克宫也就是迫，吉力减弱；凶门如果被宫克也就是制，凶力也减弱。这是门宫生克的实用价值——不是门吉就一定吉，还要看门与宫的关系。比如开门大吉属金，如果落震3宫木，金克木为迫，开门的吉力就要打折。单看门的吉凶是不够的，必须看门宫互动。"}, {"idx": 8, "title": "八神属性", "text": "进入第六站，八神。八神依次为值符、腾蛇、太阴、六合、白虎、玄武、九地、九天。值符属土阳，是首领百神之主，大吉。腾蛇属火阴，主虚诈惊恐。太阴属金阴，主阴佑隐藏。六合属木阳，主和合婚姻。白虎属金阳，主凶恶刑伤。玄武属水阴，主盗窃暗昧。九地属土阴，主牢固防守。九天属金阳，主威悍出击。八神中值符最吉，白虎玄武最凶。排列规律是：阳遁顺排，值符腾蛇太阴六合白虎玄武九地九天；阴遁逆排，方向反过来。"}, {"idx": 9, "title": "八神排列规律", "text": "八神排列规律再强调一遍。阳遁顺排：值符→腾蛇→太阴→六合→白虎→玄武→九地→九天。阴遁逆排：值符→九天→九地→玄武→白虎→六合→太阴→腾蛇。值符永远排第一，其后按阳顺阴逆排列。排神盘时先定值符落宫，再从该宫起按阳顺阴逆排八神。这个规律很重要，排盘时如果搞错顺逆，整个神盘就全错了。记住口诀：阳遁顺阴遁逆，值符领头不变。"}, {"idx": 10, "title": "AI说书人Prompt", "text": "以下是本课AI说书人的完整Prompt。让AI把九星八门八神编成天宫朝廷故事，每个星门神拟人化，体现其吉凶性格。比如天蓬是猛将胆大妄为，天任是忠臣忠厚诚实，天芮是奸臣阴险贪私，值符是统领百神之主。这种故事化教学能让枯燥的符号表变成鲜活的角色记忆——你记不住天芮星属土阴大凶，但能记住天芮是朝中奸臣阴险贪私。课后大家可以拿这个Prompt让不同AI讲故事，看哪个讲得最生动最准确。"}, {"idx": 11, "title": "四盘要素自测", "text": "现在做五道自测题。第一题天芮星的本宫和吉凶？答案坤2宫大凶，天芮阴险贪私主病。第二题天蓬星落乾6宫金是何状态？答案废，天蓬属水乾属金金生水是生我之宫为废。第三题以下哪个是三吉门之一？答案生门，三吉门开休生。第四题门克宫称为什么关系？答案迫，门克宫为迫吉门受迫减吉。第五题阴遁时八神如何排列？答案逆排，阴遁逆排阳遁顺排。五题全对的同学举手，很好。"}, {"idx": 12, "title": "找AI的错", "text": "进入找AI的错环节。AI说书人输出了一个四盘故事，但里面故意埋了三处错误。第一处：故事中说天芮星大吉——错！天芮星是坤2宫土阴大凶，阴险贪私，是最凶的星之一。第二处：故事中说死门大吉——错！死门是坤2宫土大凶，主死亡丧事。第三处：故事中说阴遁八神顺排——错！阴遁逆排，阳遁才顺排。三处错误分别对应星性搞反、门性搞反、排列方向搞反三类典型错误。AI是工具不是权威，你必须有能力判断它对不对。"}, {"idx": 13, "title": "四盘要素数据总览", "text": "来看本课数据总览。9颗九星配9宫主天盘，8道八门配8宫主人盘，8位八神随值符排主神盘，5种旺相休囚废状态定星气强弱，5种和义迫制比关系定门宫互动。9星加8门加8神共25要素，配5状态加5关系，构成完整四盘体系。这些要素不是凭空捏造的，而是源于古代天文观测九星对应北斗九星、方位哲学八门对应八方、神灵信仰八神对应八种神力。今天建立这个符号库，下节课就拿它来排盘。"}, {"idx": 14, "title": "天地人神四盘分工", "text": "奇门四盘各管一摊，分工明确又相互配合。天盘九星主天时，旺相休囚废定星气强弱。地盘干支主地利，上节课已经建立。人盘八门主人和，门宫生克定门吉凶。神盘八神主神助，阳顺阴逆排神序。排盘时四盘叠在一起，判断时四盘综合考量——这就是奇门比六爻大六壬更复杂也更精密的原因。六爻只有6个用神，大六壬12个，奇门有64个用神，因为四盘叠合的信息量远超单盘。"}, {"idx": 15, "title": "讨论——吉门一定吉吗", "text": "讨论题：吉门一定吉吗？门宫生克告诉我们，吉门受迫减吉，凶门受制减凶。这意味着开门虽然大吉，但如果开门落巽4宫木，开门属金克巽木为迫，吉力就要打折。那么一个受迫的吉门，和一个受制的凶门，哪个更可用？讨论这个问题的意义在于——奇门判断不能只看单一符号的吉凶，必须看符号与环境的互动。这就像一个好员工放到不合适的岗位也会发挥不佳。课后请结合门宫生克五关系，思考四盘综合判断时星吉门凶如何取舍。"}, {"idx": 16, "title": "九星补充——旺相推演", "text": "再做一个旺相休囚废的推演练习，巩固一下。天辅星属木，守巽4宫。如果天辅星落坎1宫水，水生木是生我之宫为废。落震3宫木，同行为相。落坤2宫土，木克土是我克之宫为休。落乾6宫金，金克木是克我之宫为囚。落离9宫火，木生火是我生之宫为旺。所以天辅星落离9宫最旺，落乾6宫最囚。这个推演方法对所有九星通用：先查星五行，再查宫五行，最后按旺我生相同行休我克囚克我废生我来定。多练几次就熟了。"}, {"idx": 17, "title": "八门补充——吉凶应用", "text": "八门的吉凶在实际判断中如何应用？三吉门开休生：开门主事业，问工作遇开门大吉；休门主安养，问健康遇休门吉；生门主财运，问生意遇生门大吉。三凶门伤死惊：伤门主伤害，问出行遇伤门要防意外；死门主丧事，问病遇死门凶；惊门主官非，问诉讼遇惊门要防败诉。杜门主堵塞，问寻人遇杜门可能找不到。景门主文书，问考试遇景门要看旺相，旺则吉衰则平。门义不同，应用不同，这是用神选择的基础。"}, {"idx": 18, "title": "八神补充——排列实操", "text": "八神排列实操演示。假设阳遁，值符落坎1宫。顺排：值符坎1、腾蛇坤2、太阴震3、六合巽4、白虎中5、玄武乾6、九地兑7、九天艮8。如果是阴遁，值符同样落坎1宫，逆排：值符坎1、九天坤2、九地震3、玄武巽4、白虎中5、六合乾6、太阴兑7、腾蛇艮8。注意阳遁阴遁的排列方向相反，但值符位置不变。排神盘的关键是先定值符落宫，再按阳顺阴逆从值符宫起排。这个实操下节课排盘时还要用到。"}, {"idx": 19, "title": "四盘综合——为什么奇门精密", "text": "为什么奇门比六爻大六壬更精密？因为四盘叠合。同一个宫位，竖向看有天盘星、地盘干、人盘门、神盘神四个要素，横向看有宫与宫的生克制化，再加上内外盘主远近快慢、月令定旺相休囚——信息量是单盘的好几倍。六爻只有6个用神，大六壬12个，奇门有64个用神，就是因为四盘叠合提供了多维信息。但这种精密也带来复杂——排盘要排四层，判断要综合四盘，学习曲线陡峭。不过只要把符号体系建好了，后面就是组合应用。"}, {"idx": 20, "title": "本课总结", "text": "总结本课六大收获：第一九星9星配9宫，四吉天任天辅天心天禽，两大凶天蓬天芮；第二旺相休囚废，旺我生相同行休我克囚克我废生我；第三伏吟反吟，星回本宫停滞星到对冲反复；第四八门三吉开休生三凶伤死惊杜景中平；第五门宫生克和义迫制比，吉门受迫减吉凶门受制减凶；第六八神值符腾蛇太阴六合白虎玄武九地九天，阳遁顺排阴遁逆排。核心：9星8门8神25要素加5状态加5关系等于完整四盘体系。下节课我们进入定局起局排盘七步骤，本课的四盘要素全表就是排盘的天地人神四层输入。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
