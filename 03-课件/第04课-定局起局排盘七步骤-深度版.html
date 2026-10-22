@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">⚙️</div>
+    <span class="tag">第4课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">定局起局——排盘七步骤</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">从时间到盘面：阴阳遁·节气用局·拆补法·七步成盘</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：手动排盘能力 → 第5课输入：判断的对象=已排好的盘</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">课程导览</span><h2>本课地图：从时间到盘面的七步流水线</h2><p><b class="lead">上节课我们建立了四盘要素表——九星八门八神干支。</b>但这25个要素怎么落到九宫上去？这就需要排盘。排盘是奇门遁甲最硬核的技术环节：给你一个时间，你要能排出完整的天地人神四盘。</p><p><b class="lead">本课我们沿七步骤走完排盘全流程：</b>定时→定节气→定阴阳遁→定局数→排地盘→排天盘→排人盘神盘。AI今天扮演'排盘模拟器'，输入时间输出盘面。但你要能手动排——AI是验证工具不是替代品，排盘逻辑必须内化到你自己脑子里。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">阴阳遁</div><div class="gb">冬至阳·夏至阴</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">节气用局</div><div class="gb">24节气×上中下三元</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">拆补法</div><div class="gb">定局数四步骤</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">排地盘</div><div class="gb">阳顺阴逆排九干</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">排天盘</div><div class="gb">找值符随时干</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">排人神盘</div><div class="gb">值使随值符·神阳顺阴逆</div></div></div><div class="sum-box">七步骤：定时→定节气→定阴阳遁→定局数→排地盘→排天盘→排人神盘</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">开场钩子</span><div class="quote-big"><div class="qi">❝</div><div class="qt">给你一个时间，你能排出奇门盘吗？排盘需要几步？答案是七步。</div><div class="qs">排盘七步骤导引</div></div><p><b class="lead">排盘是奇门最硬核的技术。</b>前两节课我们学了符号语言（干支）和要素属性（星门神），但这些都是散件——排盘就是把散件组装成盘面的过程。组装有严格的七步流程，一步错步步错。</p><p><b class="lead">今天AI扮演排盘模拟器，输入时间就能输出盘面。</b>但请注意：AI排盘也会出错，尤其在阴遁逆排和值符定位两个环节。你必须能手动排，才能验证AI对不对。本课末尾我们照例找AI埋的三处错。</p><div class="sum-box">排盘=把散件组装成盘面，七步流程一步错步步错</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">KP1·阴阳遁</span><h2>阴阳遁划分：冬至阳遁夏至阴遁</h2><p class="para-anchored"><b class="lead">阴阳遁的划分依据太阳运行轨迹。</b>冬至一阳生，从冬至到夏至阳气渐长，用阳遁，阳遁一局至九局递增。夏至一阴生，从夏至到冬至阴气渐长，用阴遁，阴遁九局至一局递减。</p><p class="para-anchored"><b class="lead">这个划分不是任意的，而是对应太阳回归年的阴阳消长节律。</b>冬至太阳到南回归线开始北返，阳气始生；夏至太阳到北回归线开始南返，阴气始生。阳遁顺排九宫从一到九，阴遁逆排从九到一，方向相反。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">口诀：冬至阳遁一，夏至阴遁九。阳遁递增阴遁递减，方向相反。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>时段</th><th>遁类</th><th>局数方向</th><th>依据</th></tr><tr><td>冬至→夏至</td><td>阳遁</td><td>一局→九局递增</td><td>阳气渐长</td></tr><tr><td>夏至→冬至</td><td>阴遁</td><td>九局→一局递减</td><td>阴气渐长</td></tr></table></div><div class="sum-box">冬至阳遁1→9递增，夏至阴遁9→1递减</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">KP2·节气用局</span><h2>二十四节气用局表（上中下三元）</h2><p class="para-anchored"><b class="lead">每节气分上中下三元，每元5天，共15天。</b>三元局数按规律排列：冬至阳遁1/7/4，每元局数差3（mod 9）。从冬至起，每节气三元局数有固定对应。</p><p class="para-anchored"><b class="lead">阳遁节气（冬至到芒种）：</b>冬至1/7/4、小寒2/8/5、大寒3/9/6、立春8/5/2、雨水9/6/3、惊蛰1/7/4、春分3/9/6、清明4/1/7、谷雨5/2/8、立夏4/1/7、小满5/2/8、芒种6/3/9。阴遁节气（夏至到大雪）：夏至9/3/6、小暑8/2/5、大暑7/1/4、立秋2/5/8、处暑1/4/7、白露9/3/6、秋分7/1/4、寒露6/9/3、霜降5/8/2、立冬6/9/3、小雪5/8/2、大雪4/7/1。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">规律：每节气三元局数差3（mod 9）。冬至阳遁1起，夏至阴遁9起。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>节气</th><th>上元</th><th>中元</th><th>下元</th><th>遁类</th></tr><tr><td>冬至</td><td>1</td><td>7</td><td>4</td><td>阳</td></tr><tr><td>小寒</td><td>2</td><td>8</td><td>5</td><td>阳</td></tr><tr><td>立春</td><td>8</td><td>5</td><td>2</td><td>阳</td></tr><tr><td>春分</td><td>3</td><td>9</td><td>6</td><td>阳</td></tr><tr><td>夏至</td><td>9</td><td>3</td><td>6</td><td>阴</td></tr><tr><td>小暑</td><td>8</td><td>2</td><td>5</td><td>阴</td></tr><tr><td>立秋</td><td>2</td><td>5</td><td>8</td><td>阴</td></tr><tr><td>秋分</td><td>7</td><td>1</td><td>4</td><td>阴</td></tr></table></div><div class="sum-box">24节气×3元=72局，每元5天，冬至阳1夏至阴9</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">KP3·定局方法</span><h2>三种定局方法对比</h2><div class="tbl-wrap"><table class="dt"><tr><th>方法</th><th>精度</th><th>推荐</th><th>特点</th></tr><tr><td>拆补法</td><td>最优</td><td>★★★</td><td>张志春推荐，无误差</td></tr><tr><td>置闰法</td><td>有误差</td><td>★★</td><td>传统方法，需置闰</td></tr><tr><td>茅山法</td><td>精度不足</td><td>★</td><td>简便速查，不精确</td></tr></table></div><p><b class="lead">定局数有三种方法。</b>拆补法是最优方法，张志春老师推荐，以实际天数÷5取余定上中下元，无误差。置闰法是传统方法，类似农历置闰，有误差需调整。茅山法简便但精度不足，茅山派所传，速查但不精确。</p><p><b class="lead">本课采用拆补法。</b>拆补法的核心思想：不置闰也不补天，直接用实际天数除以5取余，余数决定上中下元。这种方法最直接最准确，是现代奇门教学的主流方法。</p></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">KP4·拆补法</span><h2>拆补法定局四步骤</h2><ol class="steps-list"><li>第一步：确定当前节气（查万年历）</li><li>第二步：查该节气上元第一天的甲子或甲午日期</li><li>第三步：实际天数÷5取余定上中下元（余1=上元，余2=中元，余0=下元）</li><li>第四步：查二十四节气用局表，定局数</li></ol><div class="sum-box">示例：冬至后第12天，12÷5余2=中元，冬至中元阳遁7局</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">KP5·七步骤</span><h2>起局七步骤：从时间到完整盘面</h2><p>起局七步骤是排盘的完整流程，每一步都不可跳过。这七步把一个时间点转化为天地人神四盘叠合的九宫盘面，是奇门遁甲最核心的技术操作。</p><div class="flow-v"><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">年月日时转干支（查万年历）</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">查当前节气</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">冬至→夏至阳遁，夏至→冬至阴遁</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">拆补法定上中下元，查表定局数</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">阳遁顺排戊己庚辛壬癸丁丙乙（从局数宫起），阴遁逆排</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">找值符——时辰旬首所对应之宫的星，值符随时干落宫</div></div><div class="flow-node"><div class="fn-dot">St</div><div class="fn-txt">值使随值符排八门，八神随值符阳顺阴逆排</div></div></div><p class="hl">七步骤：定时→定节气→定阴阳遁→定局数→排地盘→排天盘→排人神盘</p></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">KP5·排地盘</span><h2>排地盘详解：阳顺阴逆排九干</h2><p class="para-anchored"><b class="lead">排地盘是七步骤中最关键的一步。</b>九个符号戊己庚辛壬癸丁丙乙，从局数对应的宫起排。阳遁顺排（按九宫顺序1→2→3→4→5→6→7→8→9），阴遁逆排（反方向）。</p><p class="para-anchored">举例：阳遁一局，从坎1宫起排戊，顺排：坎1戊、坤2己、震3庚、巽4辛、中5壬、乾6癸、兑7丁、艮8丙、离9乙。如果是阴遁九局，从离9宫起排戊，逆排：离9戊、艮8己、兑7庚、乾6辛、中5壬、巽4癸、震3丁、坤2丙、坎1乙。起宫是局数对应宫，不是固定坎1宫——这是最易错的点。</p><div class="callout blue"><div class="ci">⚠️</div><div class="cb">起宫是局数对应宫！阳遁1局从坎1起，阳遁3局从震3起，不是固定坎1。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>宫位</th><th>阳遁1局</th><th>阴遁9局</th></tr><tr><td>坎1</td><td>戊</td><td>乙</td></tr><tr><td>坤2</td><td>己</td><td>丙</td></tr><tr><td>震3</td><td>庚</td><td>丁</td></tr><tr><td>巽4</td><td>辛</td><td>癸</td></tr><tr><td>中5</td><td>壬</td><td>壬</td></tr><tr><td>乾6</td><td>癸</td><td>辛</td></tr><tr><td>兑7</td><td>丁</td><td>庚</td></tr><tr><td>艮8</td><td>丙</td><td>己</td></tr><tr><td>离9</td><td>乙</td><td>戊</td></tr></table></div><div class="sum-box">口诀：阳遁顺排戊己庚辛壬癸丁丙乙，阴遁逆排，从局数宫起</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">KP5·排天盘</span><h2>排天盘详解：找值符随时干走</h2><p class="para-anchored"><b class="lead">排天盘的核心是找值符。</b>值符是时辰旬首所对应之宫的星。旬首就是时辰干支所属六甲旬的甲干，甲遁于某仪，该仪所在宫的星就是值符。</p><p class="para-anchored">找到值符后，值符随时干落宫——时干在哪个宫，值符就转到那个宫，其余八星按值符的转动规律同步旋转。这就是'天盘随地盘转，值符随时干走'。排天盘时，天盘星与地盘干的对应关系不变，只是整体旋转了一个角度。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">值符随时干走，不是随日干！时辰旬首→甲遁某仪→该仪所在宫→该宫之星=值符。</div></div><ul class='steps-list'><li>Step1: 找时辰旬首（甲子/甲戌/甲申/甲午/甲辰/甲寅）</li><li>Step2: 旬首甲遁于某仪（甲子遁戊...）</li><li>Step3: 该仪在地盘何宫</li><li>Step4: 该宫之本星=值符</li><li>Step5: 值符转到时干所在宫</li><li>Step6: 其余八星同步旋转</li></ul><div class="sum-box">值符随时干走：时辰旬首→遁仪→所在宫→本星=值符→转至时干宫</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">KP5·排人神盘</span><h2>排人盘与神盘：值使随值符·神阳顺阴逆</h2><p class="para-anchored">排人盘：值使随值符排八门。值使就是时辰旬首所对应之宫的门，与值符同宫。找到值使后，八门按值符的转动规律同步旋转——值符转多少，值使也转多少，其余七门同步。</p><p class="para-anchored">排神盘：八神随值符排。值符永远排第一，其余七神按阳遁顺排（值符→腾蛇→太阴→六合→白虎→玄武→九地→九天）或阴遁逆排。排神盘的关键是先定值符落宫，再从该宫起按阳顺阴逆排八神。</p><p class="para-anchored"><b class="lead">总结排盘三句口诀：</b>地盘阳顺阴逆排九干，天盘值符随时干走，人神盘随值符转。</p><div class="sum-box">人盘：值使随值符转八门同步；神盘：八神阳顺阴逆从值符宫起排</div></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">KP6·伏吟规律</span><h2>起局规律：六甲伏吟六癸门伏</h2><p class="para-anchored"><b class="lead">排盘有两个特殊规律要记牢。</b>六甲时（甲子甲戌甲申甲午甲辰甲寅）星门伏吟——星回本宫门回本宫，主停滞不动。六癸时八门伏吟——门回本宫，主事情堵塞。</p><p class="para-anchored"><b class="lead">伏吟主停滞，遇到伏吟的盘要特别标注，判断时主事情拖延不动。</b>反吟主反复，星到对冲宫主事情波折。这两种异常状态在排盘后要首先检查，是判断的前置条件。</p><div class="tbl-wrap"><table class="dt"><tr><th>时辰</th><th>状态</th><th>主事</th></tr><tr><td>六甲时</td><td>星门伏吟</td><td>停滞不动</td></tr><tr><td>六癸时</td><td>八门伏吟</td><td>事情堵塞</td></tr><tr><td>正常时</td><td>无伏吟</td><td>正常判断</td></tr></table></div><div class="sum-box">六甲时星门伏吟主停滞，六癸时八门伏吟主堵塞</div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">AI融入·模拟器</span><h2>AI排盘模拟器Prompt模板</h2><p><b class="lead">以下是本课AI排盘模拟器的完整Prompt。</b>输入时间，AI按七步骤排盘输出九宫格盘面。Prompt中明确列出了七步骤和关键规则（阳顺阴逆、值符随时干等），并要求不确定时标注'待查'而非编造。</p><p><b class="lead">使用建议：</b>先自己手动排盘，再用AI模拟器验证。如果两者结果不同，先检查自己是否出错（尤其在起宫和值符定位两步），确认自己无误后再判AI错。AI是验证工具不是替代品。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲排盘模拟器。用户输入时间（年月日时），你按七步骤排盘：
+
+Step1 定时：年月日时转干支（查万年历）
+Step2 定节气：查当前节气
+Step3 定阴阳遁：冬至→夏至阳遁，夏至→冬至阴遁
+Step4 定局数：拆补法（实际天数÷5取余定上中下元，查节气用局表）
+Step5 排地盘：阳遁顺排戊己庚辛壬癸丁丙乙（从局数宫起），阴遁逆排
+Step6 排天盘：找值符（时辰旬首→遁仪→所在宫→本星=值符→转至时干宫）
+Step7 排人盘神盘：值使随值符排八门，八神随值符阳顺阴逆排
+
+输出：九宫格盘面，每宫标{天盘星/地盘干/八门/八神}。
+规则：
+- 起宫是局数对应宫，非固定坎1
+- 阴遁地盘逆排非顺排
+- 值符随时干走非随日干
+- 六甲时星门伏吟，六癸时八门伏吟
+若不确定某步，标注"待查"而非编造。</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">自测·排盘</span><h2>排盘七步骤自测（5题）</h2><div class='quiz-q'><p><b>Q1. 冬至后用何遁？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 阴遁</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 阳遁</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 视情况而定</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 不用遁</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 冬至→夏至用阳遁，阳气渐长，阳遁一局至九局递增。夏至→冬至才用阴遁。</div></div><div class='quiz-q'><p><b>Q2. 阳遁一局排地盘，戊起于何宫？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,1)'>A. 离9宫</div><div class='quiz-opt' onclick='reveal(this,1,1,1)'>B. 坎1宫</div><div class='quiz-opt' onclick='reveal(this,1,2,1)'>C. 震3宫</div><div class='quiz-opt' onclick='reveal(this,1,3,1)'>D. 乾6宫</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 阳遁一局从局数对应宫起排，1局对应坎1宫，戊起于坎1。起宫是局数对应宫！</div></div><div class='quiz-q'><p><b>Q3. 拆补法中，冬至后第12天属何元？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 上元</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 中元</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 下元</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 无法确定</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 12÷5余2=中元。余1=上元，余2=中元，余0=下元。冬至中元阳遁7局。</div></div><div class='quiz-q'><p><b>Q4. 值符随什么走？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,1)'>A. 日干</div><div class='quiz-opt' onclick='reveal(this,3,1,1)'>B. 时干</div><div class='quiz-opt' onclick='reveal(this,3,2,1)'>C. 月干</div><div class='quiz-opt' onclick='reveal(this,3,3,1)'>D. 年干</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 值符随时干走，不是随日干。时辰旬首→遁仪→所在宫→本星=值符→转至时干所在宫。</div></div><div class='quiz-q'><p><b>Q5. 六甲时出现什么状态？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 反吟</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 星门伏吟</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 八门伏吟</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 正常</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 六甲时星门伏吟——星回本宫门回本宫，主停滞不动。六癸时才是八门伏吟。</div></div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">找AI的错</span><h2>找AI的错：排盘结果3处错误</h2><div class="case-card"><div class="case-head">AI模拟器的排盘结果（埋了3处错）</div><p class="case-body">AI模拟器输出了一份排盘结果，但里面故意埋了三处错误。请你用刚学的排盘知识找出它们——这是本课的'找AI的错'环节，训练你对AI排盘结果的鉴别力。</p><p class="case-body">错误1：阴遁排地盘时用了顺排——错！阴遁应逆排，阳遁才顺排。错误2：值符随日干落宫——错！值符随时干走，不是随日干。错误3：排地盘起宫用了坎1宫——错！起宫是局数对应宫，阳遁3局应从震3宫起，不是固定坎1。</p><div class="case-metrics"><div class="cm"><div class="cm-v">3</div><div class="cm-l">处错误</div></div><div class="cm"><div class="cm-v">100%</div><div class="cm-l">应检出率</div></div></div></div><p class="hl">3处错：阴遁顺排(应逆排)、值符随日干(应随时干)、起宫坎1(应局数宫)</p></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">本课数据</span><h2>排盘数据总览</h2><p><b class="lead">排盘是奇门最硬核的技术环节，涉及的数据量和规则量远超前两课。</b>但只要把七步骤内化，排盘就是机械操作——给时间出盘面，可重复可验证。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">7</div><div class="kl">步骤</div><div class="kd">定时到排人神盘</div></div><div class="kpi blue"><div class="kv">24</div><div class="kl">节气</div><div class="kd">每节气3元×5天</div></div><div class="kpi blue"><div class="kv">72</div><div class="kl">局数</div><div class="kd">24节气×3元=72局</div></div><div class="kpi blue"><div class="kv">9</div><div class="kl">地盘干</div><div class="kd">戊己庚辛壬癸丁丙乙</div></div><div class="kpi blue"><div class="kv">2</div><div class="kl">伏吟</div><div class="kd">六甲星门伏·六癸门伏</div></div></div><div class="sum-box">7步骤+24节气+72局+9干+2伏吟规律=完整排盘体系</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">排盘流程</span><h2>排盘流程时间线：七步骤详解</h2><p><b class="lead">排盘七步骤是一条严格的流水线，前一步的输出是后一步的输入。</b>任何一步出错都会导致整个盘面错误，所以必须逐步验证。</p><div class="tl-v"><div class="tl-item"><div class="tt"><span class="tm">Step1</span>定时</div><div class="td">年月日时→干支（查万年历）</div></div><div class="tl-item"><div class="tt"><span class="tm">Step2</span>定节气</div><div class="td">查当前节气</div></div><div class="tl-item"><div class="tt"><span class="tm">Step3</span>定阴阳遁</div><div class="td">冬至阳夏至阴</div></div><div class="tl-item"><div class="tt"><span class="tm">Step4</span>定局数</div><div class="td">拆补法÷5取余+查表</div></div><div class="tl-item"><div class="tt"><span class="tm">Step5</span>排地盘</div><div class="td">阳顺阴逆排九干</div></div><div class="tl-item"><div class="tt"><span class="tm">Step6</span>排天盘</div><div class="td">找值符随时干走</div></div><div class="tl-item"><div class="tt"><span class="tm">Step7</span>排人神盘</div><div class="td">值使随值符·神阳顺阴逆</div></div></div><div class="sum-box">七步骤严格流水线，前步输出=后步输入，一步错步步错</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">补充·排盘案例</span><h2>完整排盘案例：阳遁一局演示</h2><p class="para-anchored"><b class="lead">以阳遁一局为例完整演示排地盘。</b>从坎1宫起排戊，顺排九宫：坎1戊、坤2己、震3庚、巽4辛、中5壬、乾6癸、兑7丁、艮8丙、离9乙。这就是地盘九干的排列。</p><p class="para-anchored">排天盘：假设时辰旬首为甲子，甲子遁戊，戊在地盘坎1宫，坎1宫本星为天蓬，所以值符=天蓬。如果时干为丙，丙在地盘艮8宫，值符天蓬转到艮8宫，其余八星同步旋转。排人盘：值使与值符同宫，八门同步旋转。排神盘：值符落艮8，阳遁顺排，从艮8起排值符腾蛇太阴...。这样四盘就排好了。</p><div class="tbl-wrap"><table class="dt"><tr><th>宫位</th><th>地盘干</th><th>本星</th><th>本门</th></tr><tr><td>坎1</td><td>戊</td><td>天蓬</td><td>休门</td></tr><tr><td>坤2</td><td>己</td><td>天芮</td><td>死门</td></tr><tr><td>震3</td><td>庚</td><td>天冲</td><td>伤门</td></tr><tr><td>巽4</td><td>辛</td><td>天辅</td><td>杜门</td></tr><tr><td>乾6</td><td>癸</td><td>天心</td><td>开门</td></tr><tr><td>兑7</td><td>丁</td><td>天柱</td><td>惊门</td></tr><tr><td>艮8</td><td>丙</td><td>天任</td><td>生门</td></tr><tr><td>离9</td><td>乙</td><td>天英</td><td>景门</td></tr></table></div><div class="sum-box">阳遁1局地盘：坎1戊坤2己震3庚巽4辛中5壬乾6癸兑7丁艮8丙离9乙</div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">课堂讨论</span><h2>讨论：拆补法为什么优于置闰法？</h2><p>拆补法和置闰法的核心区别在于如何处理节气交替时的'余日'。置闰法把余日攒起来置闰，类似农历的闰月，但会引入误差。拆补法直接用实际天数除以5取余，不攒不闰，所以无误差。</p><p>但拆补法在节气交替的边界处可能'拆'或'补'——即前节气的余日归入后节气的上元，或后节气提前开始。这种处理是否合理？讨论这个问题有助于理解拆补法的数学本质。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">拆补法的'拆'和'补'具体指什么？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">置闰法的误差有多大？在什么情况下会出错？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">茅山法为什么简便但不精确？</div></div></div><p class="hl">拆补法不置闰不补天，直接÷5取余，无误差——现代主流</p></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">补充·手动排盘</span><h2>为什么要手动排盘而不只靠AI</h2><p class="para-anchored"><b class="lead">为什么要手动排盘而不只靠AI？</b>三个原因。第一，AI会出错，尤其在阴遁逆排和值符定位两步，你必须能验证。第二，排盘逻辑内化后判断才快——你看到盘面能立刻感知伏吟反吟、星门吉凶，不用再回头查AI。</p><p class="para-anchored"><b class="lead">第三，教学传承需要——奇门是口传心授的学问，排盘是基本功，不会手动排等于不会奇门。</b>所以正确的学习路径是：先学手动排盘，再用AI验证提速，最终达到人机协同。AI是加速器不是替代品，这个定位要始终明确。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">学习路径：手动排盘→AI验证提速→人机协同。AI是加速器不是替代品。</div></div><div class="sum-box">先学手动排盘，再用AI验证，最终人机协同——AI是加速器非替代品</div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">本课总结</span><h2>总结：手动排盘能力已建立</h2><ul class="steps-list"><li>阴阳遁：冬至阳遁1→9递增，夏至阴遁9→1递减</li><li>二十四节气用局：每节气3元×5天，冬至阳1夏至阴9</li><li>拆补法：实际天数÷5取余定上中下元，最优无误差</li><li>排地盘：阳顺阴逆排戊己庚辛壬癸丁丙乙，从局数宫起</li><li>排天盘：值符随时干走（时辰旬首→遁仪→宫→星→转至时干宫）</li><li>排人神盘：值使随值符排八门，八神阳顺阴逆从值符宫起</li><li>伏吟规律：六甲时星门伏吟，六癸时八门伏吟</li></ul><div class="sum-box">核心口诀：阳顺阴逆排九干，值符随时干走，人神随值符转</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第5课《用神与分析判断——竖看横看断吉凶》</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>产出：手动排盘能力 → 第5课输入：判断的对象=已排好的盘</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位同学好，欢迎来到奇门遁甲AI+融合版课程的第四课。今天这节课的主题是\"定局起局——排盘七步骤\"。前两节课我们学了符号语言干支和要素属性星门神，但这些都是散件。排盘就是把散件组装成盘面的过程——给你一个时间，你要能排出完整的天地人神四盘。这节课的AI角色是\"排盘模拟器\"，输入时间输出盘面。但你要能手动排，AI是验证工具不是替代品。本课产出手动排盘能力，作为第五课判断的对象。开始。"}, {"idx": 1, "title": "本课地图", "text": "先看本课地图。我们沿七步骤走完排盘全流程：定时、定节气、定阴阳遁、定局数、排地盘、排天盘、排人盘神盘。前四步是准备工作——把时间转化为排盘参数；后三步是实际排盘——把九干九星八门八神落到九宫上。AI今天扮演排盘模拟器做验证，但排盘逻辑必须内化到你自己脑子里。课末照例找AI埋的三处错。排盘是奇门最硬核的技术，一步错步步错，所以七步骤要逐步验证。"}, {"idx": 2, "title": "开场钩子", "text": "先抛个问题：给你一个时间，你能排出奇门盘吗？排盘需要几步？答案是七步。排盘是奇门最硬核的技术环节。前两节课的符号和要素都是散件，排盘就是组装。组装有严格的七步流程，一步错步步错。今天AI扮演排盘模拟器，输入时间就能输出盘面。但请注意AI排盘也会出错，尤其在阴遁逆排和值符定位两个环节。你必须能手动排，才能验证AI对不对。本课末尾我们照例找AI埋的三处错，训练你的鉴别力。"}, {"idx": 3, "title": "阴阳遁划分", "text": "进入第一站，阴阳遁划分。依据太阳运行轨迹：冬至一阳生，从冬至到夏至阳气渐长用阳遁，阳遁一局至九局递增；夏至一阴生，从夏至到冬至阴气渐长用阴遁，阴遁九局至一局递减。这个划分不是任意的，而是对应太阳回归年的阴阳消长节律。冬至太阳到南回归线开始北返阳气始生，夏至太阳到北回归线开始南返阴气始生。口诀：冬至阳遁一，夏至阴遁九。阳遁递增阴遁递减，方向相反。这个方向区别一定要记牢，排地盘时直接用到。"}, {"idx": 4, "title": "二十四节气用局表", "text": "进入第二站，二十四节气用局。每节气分上中下三元，每元5天，共15天。从冬至起，冬至阳遁1/7/4，每元局数差3模9。小寒2/8/5，大寒3/9/6，立春8/5/2，雨水9/6/3，惊蛰1/7/4，春分3/9/6，清明4/1/7，谷雨5/2/8，立夏4/1/7，小满5/2/8，芒种6/3/9。夏至转阴遁：夏至9/3/6，小暑8/2/5，大暑7/1/4，立秋2/5/8，处暑1/4/7，白露9/3/6，秋分7/1/4，寒露6/9/3，霜降5/8/2，立冬6/9/3，小雪5/8/2，大雪4/7/1。24节气乘3元共72局，这个表要会查。"}, {"idx": 5, "title": "三种定局方法对比", "text": "定局数有三种方法。拆补法是最优方法，张志春老师推荐，以实际天数除以5取余定上中下元，无误差。置闰法是传统方法，类似农历置闰，有误差需调整。茅山法简便但精度不足，茅山派所传，速查但不精确。本课采用拆补法。拆补法的核心思想：不置闰也不补天，直接用实际天数除以5取余，余数决定上中下元。这种方法最直接最准确，是现代奇门教学的主流方法。三种方法对比，拆补法精度最优推荐三星，置闰法有误差推荐两星，茅山法精度不足推荐一星。"}, {"idx": 6, "title": "拆补法定局四步骤", "text": "拆补法定局四步骤。第一步确定当前节气，查万年历。第二步查该节气上元第一天的甲子或甲午日期。第三步实际天数除以5取余定上中下元：余1为上元，余2为中元，余0为下元。第四步查二十四节气用局表定局数。举例：冬至后第12天，12除以5余2等于中元，冬至中元阳遁7局。再举例：冬至后第3天，3除以5余3，注意这里余3仍属上元第3天，因为上元是第1到5天。余数规则要灵活理解：上元1到5天，中元6到10天，下元11到15天。"}, {"idx": 7, "title": "起局七步骤", "text": "起局七步骤是排盘的完整流程。Step1定时：年月日时转干支查万年历。Step2定节气：查当前节气。Step3定阴阳遁：冬至到夏至阳遁，夏至到冬至阴遁。Step4定局数：拆补法定上中下元查表定局数。Step5排地盘：阳遁顺排戊己庚辛壬癸丁丙乙从局数宫起，阴遁逆排。Step6排天盘：找值符——时辰旬首所对应之宫的星，值符随时干落宫。Step7排人盘与神盘：值使随值符排八门，八神随值符阳顺阴逆排。七步缺一不可，前步输出是后步输入。"}, {"idx": 8, "title": "排地盘详解", "text": "排地盘是七步骤中最关键的一步。九个符号戊己庚辛壬癸丁丙乙，从局数对应的宫起排。阳遁顺排按九宫顺序1到9，阴遁逆排反方向。举例阳遁一局，从坎1宫起排戊顺排：坎1戊、坤2己、震3庚、巽4辛、中5壬、乾6癸、兑7丁、艮8丙、离9乙。如果是阴遁九局，从离9宫起排戊逆排：离9戊、艮8己、兑7庚、乾6辛、中5壬、巽4癸、震3丁、坤2丙、坎1乙。最易错的点：起宫是局数对应宫！阳遁1局从坎1起，阳遁3局从震3起，不是固定坎1宫。"}, {"idx": 9, "title": "排天盘详解", "text": "排天盘的核心是找值符。值符是时辰旬首所对应之宫的星。旬首就是时辰干支所属六甲旬的甲干，甲遁于某仪，该仪所在宫的星就是值符。找到值符后，值符随时干落宫——时干在哪个宫值符就转到那个宫，其余八星按值符的转动规律同步旋转。具体步骤：第一步找时辰旬首，第二步旬首甲遁于某仪，第三步该仪在地盘何宫，第四步该宫之本星就是值符，第五步值符转到时干所在宫，第六步其余八星同步旋转。关键：值符随时干走不是随日干！"}, {"idx": 10, "title": "排人盘与神盘", "text": "排人盘：值使随值符排八门。值使就是时辰旬首所对应之宫的门，与值符同宫。找到值使后，八门按值符的转动规律同步旋转——值符转多少值使也转多少，其余七门同步。排神盘：八神随值符排。值符永远排第一，其余七神按阳遁顺排值符腾蛇太阴六合白虎玄武九地九天，或阴遁逆排。排神盘的关键是先定值符落宫，再从该宫起按阳顺阴逆排八神。总结排盘三句口诀：地盘阳顺阴逆排九干，天盘值符随时干走，人神盘随值符转。"}, {"idx": 11, "title": "伏吟规律", "text": "排盘有两个特殊规律要记牢。六甲时就是甲子甲戌甲申甲午甲辰甲寅这六个时辰，星门伏吟——星回本宫门回本宫，主停滞不动。六癸时就是六个癸干开头的时辰，八门伏吟——门回本宫，主事情堵塞。伏吟主停滞，遇到伏吟的盘要特别标注，判断时主事情拖延不动。反吟主反复，星到对冲宫主事情波折。这两种异常状态在排盘后要首先检查，是判断的前置条件。正常时辰无伏吟，正常判断。六甲星门伏吟六癸八门伏吟，不要搞混。"}, {"idx": 12, "title": "AI排盘模拟器Prompt", "text": "以下是本课AI排盘模拟器的完整Prompt。输入时间，AI按七步骤排盘输出九宫格盘面。Prompt中明确列出了七步骤和关键规则：阳顺阴逆、值符随时干、起宫是局数宫等，并要求不确定时标注待查而非编造。使用建议：先自己手动排盘，再用AI模拟器验证。如果两者结果不同，先检查自己是否出错尤其在起宫和值符定位两步，确认自己无误后再判AI错。AI是验证工具不是替代品，排盘逻辑必须内化到人脑。课后大家可以拿这个Prompt测试不同AI的排盘准确率。"}, {"idx": 13, "title": "排盘七步骤自测", "text": "现在做五道自测题。第一题冬至后用何遁？答案阳遁，冬至到夏至阳气渐长用阳遁。第二题阳遁一局排地盘戊起于何宫？答案坎1宫，阳遁1局从局数对应宫起，1局对应坎1。第三题拆补法中冬至后第12天属何元？答案中元，12除以5余2为中元，冬至中元阳遁7局。第四题值符随什么走？答案时干，值符随时干走不是随日干。第五题六甲时出现什么状态？答案星门伏吟，六甲时星门伏吟主停滞，六癸时才是八门伏吟。五题全对的同学举手。"}, {"idx": 14, "title": "找AI的错", "text": "进入找AI的错环节。AI模拟器输出了一份排盘结果，但里面故意埋了三处错误。第一处：阴遁排地盘时用了顺排——错！阴遁应逆排，阳遁才顺排。第二处：值符随日干落宫——错！值符随时干走，不是随日干。第三处：排地盘起宫用了坎1宫——错！起宫是局数对应宫，阳遁3局应从震3宫起，不是固定坎1。三处错误分别对应顺逆搞反、值符跟随对象搞错、起宫搞错三类典型排盘错误。AI排盘在这三个环节最容易出错，你必须有能力鉴别。"}, {"idx": 15, "title": "排盘数据总览", "text": "来看本课数据总览。7个步骤从定时到排人神盘，24个节气每节气3元5天，72个局数24节气乘3元，9个地盘干戊己庚辛壬癸丁丙乙，2个伏吟规律六甲星门伏和六癸门伏。7步骤加24节气加72局加9干加2伏吟规律等于完整排盘体系。排盘涉及的数据量和规则量远超前两课，但只要把七步骤内化，排盘就是机械操作——给时间出盘面，可重复可验证。这就是奇门可学可传的技术基础：排盘有固定流程，不靠灵感靠规则。"}, {"idx": 16, "title": "排盘流程时间线", "text": "排盘七步骤是一条严格的流水线。Step1定时，年月日时转干支查万年历。Step2定节气，查当前节气。Step3定阴阳遁，冬至阳夏至阴。Step4定局数，拆补法除5取余加查表。Step5排地盘，阳顺阴逆排九干。Step6排天盘，找值符随时干走。Step7排人神盘，值使随值符神阳顺阴逆。前一步的输出是后一步的输入，任何一步出错都会导致整个盘面错误，所以必须逐步验证。建议每排完一步就检查一步，不要排完四盘才发现第一步就错了。"}, {"idx": 17, "title": "完整排盘案例", "text": "以阳遁一局为例完整演示排地盘。从坎1宫起排戊，顺排九宫：坎1戊、坤2己、震3庚、巽4辛、中5壬、乾6癸、兑7丁、艮8丙、离9乙。这就是地盘九干的排列。排天盘：假设时辰旬首为甲子，甲子遁戊，戊在地盘坎1宫，坎1宫本星为天蓬，所以值符等于天蓬。如果时干为丙，丙在地盘艮8宫，值符天蓬转到艮8宫，其余八星同步旋转。排人盘：值使与值符同宫，八门同步旋转。排神盘：值符落艮8，阳遁顺排，从艮8起排值符腾蛇太阴依次。这样四盘就排好了。"}, {"idx": 18, "title": "讨论——拆补法为什么优于置闰法", "text": "讨论题：拆补法为什么优于置闰法？核心区别在于如何处理节气交替时的余日。置闰法把余日攒起来置闰类似农历闰月，但会引入误差。拆补法直接用实际天数除以5取余不攒不闰所以无误差。但拆补法在节气交替的边界处可能拆或补——即前节气的余日归入后节气的上元，或后节气提前开始。这种处理是否合理？讨论这个问题有助于理解拆补法的数学本质。拆补法不置闰不补天直接除5取余无误差，是现代主流方法。"}, {"idx": 19, "title": "排盘验证——为什么要手动排", "text": "为什么要手动排盘而不只靠AI？三个原因。第一，AI会出错，尤其在阴遁逆排和值符定位两步，你必须能验证。第二，排盘逻辑内化后判断才快——你看到盘面能立刻感知伏吟反吟、星门吉凶，不用再回头查AI。第三，教学传承需要——奇门是口传心授的学问，排盘是基本功，不会手动排等于不会奇门。所以正确的学习路径是：先学手动排盘，再用AI验证提速，最终达到人机协同。AI是加速器不是替代品，这个定位要始终明确。"}, {"idx": 20, "title": "本课总结", "text": "总结本课七大收获：第一阴阳遁冬至阳遁1到9递增夏至阴遁9到1递减；第二二十四节气用局每节气3元5天冬至阳1夏至阴9；第三拆补法实际天数除5取余定上中下元最优无误差；第四排地盘阳顺阴逆排戊己庚辛壬癸丁丙乙从局数宫起；第五排天盘值符随时干走时辰旬首遁仪宫星转至时干宫；第六排人神盘值使随值符排八门八神阳顺阴逆从值符宫起；第七伏吟规律六甲时星门伏吟六癸时八门伏吟。核心口诀：阳顺阴逆排九干，值符随时干走，人神随值符转。下节课我们进入用神与分析判断竖看横看断吉凶，本课的手动排盘能力就是下节课判断的对象——已排好的盘。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
