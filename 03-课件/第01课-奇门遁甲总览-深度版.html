@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>奇门遁甲·第01课·帝王之学的时空模型</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">🏭</div>
+    <span class="tag">第1课 · 50min</span>
+    <h1 style="margin-top:12px;font-size:32px">奇门遁甲总览——帝王之学的时空模型</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">从九宫格到时空统一，八课走通三式之冠的象数理体系</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：九宫格模型认知 → 第2课符号语言基础</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">课程地图</span><h2>八课金字塔：从九宫格到终身局</h2><p>奇门遁甲号称帝王之学，是三式之一（太乙、奇门、六壬），《四库全书》评其于方技之中最有理致。本课程八课从基础符号到终身局分析，层层递进。</p><p><b class="lead">你现在的位置是第1课——搭九宫格这个棋盘。</b>后面七课往棋盘上放符号、排盘、断卦、预测命运。每课的产出是下一课的输入。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">总览·九宫格</div><div class="gb">洛书九宫/先后天八卦/三式定位</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">符号·干支</div><div class="gb">天干地支/三奇六仪/六甲遁仪</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">要素·四盘</div><div class="gb">九星八门八神/旺相休囚</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">操作·排盘</div><div class="gb">阴阳遁/拆补法/起局七步</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">方法·判断</div><div class="gb">64用神/竖看横看/内外盘</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">进阶·格局</div><div class="gb">九遁/十干克应/吉凶格</div></div><div class="g-card"><div class="gi">7️⃣</div><div class="gh">实战·应期</div><div class="gb">庚格法/主客决策/急缓从神门</div></div><div class="g-card"><div class="gi">8️⃣</div><div class="gh">结业·终身局</div><div class="gb">四柱合参/十三步/实例解析</div></div></div><div class="sum-box">本课产出：九宫格模型认知 → 第2课输入：排布干支的宫位框架</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">KP6 · 课程定位</span><h2>三式分工与奇门定位</h2><p class="para-anchored"><b class="lead">三式是中国古代最高层次的三种预测术，各有分工。</b>太乙神数占君国大事、天下大势，由司天监掌管，用于推算年运国运。奇门遁甲占行军打仗、攻守进退，为兵家所重，诸葛亮借东风即是奇门应用的经典案例。六壬神课占日用百事、民间琐事，应用最广。</p><p class="para-anchored"><b class="lead">奇门遁甲被称为中国方术之王，《四库全书》评其于方技之中最有理致。</b>注意最有理致四字——意味着它不是纯神秘主义，而是有数学结构（洛书九宫纵横皆十五）和逻辑体系（天地人神四盘生克制化）的象数理模型。这是本课程的认知前提：我们以数理结构理解奇门，不以神秘主义对待奇门。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">关键认知：奇门遁甲 = 数理结构（洛书幻方）+ 逻辑体系（四盘生克）+ 时空模型（先后天八卦合用），不是纯神秘主义。</div></div><div class="sum-box">本课目标：建立这个认知框架，为后续七课奠定基调。</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">KP1 · 九宫格起源</span><h2>九宫格从切西瓜开始——太极认知原理</h2><p class="para-anchored"><b class="lead">太极（球体）沿不同方向切4刀，得到9块——即井字九宫格。</b>这个看似简单的切割过程包含了0至9全部十个数字：0是未切之前的完整太极（混沌未分的状态），1至8是八次切割产生的八个方位（对应八卦方位），9是最终得到的九块（九宫成形）。这不是巧合，而是太极生两仪、两仪生四象、四象生八卦的数学展开。</p><p class="para-anchored"><b class="lead">先天八卦用1至8（中五不用），体现阳的特性——阳主动、主外、主显。</b>九宫格用1至9（五居中央），体现阴的特性——阴主静、主内、主藏。这不是随意编号，而是阳遁与阴遁的数学根基。后续排盘时，阳遁顺布六仪逆布三奇、阴遁逆布六仪顺布三奇，其方向差异正源于此。</p><div class="callout amber"><div class="ci">⚠️</div><div class="cb">易错点：学生常把九宫格当成普通的3×3方格——它不是。它是太极展开的数学结构，每个数字都有哲学含义。</div></div><div class="sum-box">核心：0=太极未分，1-8=八卦方位，9=九宫成形。先天用1-8（阳），九宫用1-9（阴）。</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">KP2 · 洛书九宫</span><h2>洛书九宫——奇门排盘的数学基础</h2><p class="para-anchored"><b class="lead">洛书九宫的口诀是戴九履一，左三右七，四二为肩，八六为足，中间为五。</b>翻译成方位：南方戴九（离）、北方履一（坎）、东方左三（震）、西方右七（兑）、左上肩四（巽）、右上肩二（坤）、左下足八（艮）、右下足六（乾）、中央五。这个排列不是随意的，它构成了一个三级幻方。</p><p class="para-anchored"><b class="lead">三级幻方的核心性质是每行、每列、对角线之和均为15。</b>比如第一行4+9+2=15，第一列4+3+8=15，对角线4+5+6=15。奇数（1/3/5/7/9）居四正方位加中央，偶数（2/4/6/8）居四隅方位。这个数学结构使九宫具有旋转对称性——无论从哪个方向看，面对的数字之和都相等，这就是九宫八卦阵的数学奥秘。</p><div class="callout red"><div class="ci">⚠️</div><div class="cb">易错点TOP1：四二为肩——左上四、右上二，不是左二右四！填完用纵横皆十五验证。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>巽四</th><th>离九</th><th>坤二</th></tr><tr><td>震三</td><td>中五</td><td>兑七</td></tr><tr><td>艮八</td><td>坎一</td><td>乾六</td></tr></table></div><div class="sum-box">口诀：戴九履一，左三右七，四二为肩，八六为足，中间为五。纵横皆十五。</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">课堂练习</span><h2>九宫格填空——用纵横皆十五约束</h2><div class='quiz-q'><p><b>Q1. 洛书九宫中，已知坎宫（北方）的数字是1，离宫（南方）的数字是9，那么中央的数字是多少？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 3</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 5</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 7</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 9</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 对角线坎-中-离：1+中+9=15，所以中央=5。这也是中间为五的由来。</div></div><div class='quiz-q'><p><b>Q2. 洛书九宫中，巽宫（左上）是4，震宫（左中）是3，那么艮宫（左下）是多少？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,2)'>A. 6</div><div class='quiz-opt' onclick='reveal(this,1,1,2)'>B. 7</div><div class='quiz-opt' onclick='reveal(this,1,2,2)'>C. 8</div><div class='quiz-opt' onclick='reveal(this,1,3,2)'>D. 9</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 第一列4+3+艮=15，所以艮=8。口诀八六为足，左下足八。</div></div><div class='quiz-q'><p><b>Q3. 九宫格中奇数和偶数的分布规律是？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 奇数居四隅，偶数居四正</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 奇数居四正+中央，偶数居四隅</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 随机分布</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 奇数在外圈，偶数在内圈</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 奇数（1/3/5/7/9）居四正方位（东南西北）加中央，偶数（2/4/6/8）居四隅方位（四角）。</div></div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">KP3 · 先天八卦</span><h2>先天八卦——本体论的数理结构</h2><p class="para-anchored"><b class="lead">先天八卦的排列是乾1、兑2、离3、震4、巽5、坎6、艮7、坤8，按1至8顺序排列。</b>核心性质是相对方向之和为9（阳数）：乾1对坤8等于9，兑2对艮7等于9，离3对坎6等于9，震4对巽5等于9。中五不用，体现阳的特性——阳主动、主外、主显，所以先天八卦描述的是本体论、立体宇宙的结构。</p><p class="para-anchored"><b class="lead">先天八卦竖看——所谓竖看就是从立体角度理解宇宙的本源结构。</b>乾为天在上、坤为地在下，这是宇宙的本体定位。离为火、坎为水，火在上水在下，这是自然现象的本源秩序。先天八卦不涉及方位应用，它回答的是万物从何而来、本体结构是什么的问题。</p><div class="tbl-wrap"><table class="dt"><tr><th>卦</th><th>乾</th><th>兑</th><th>离</th><th>震</th><th>巽</th><th>坎</th><th>艮</th><th>坤</th></tr><tr><td>先天数</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr><tr><td>相对和</td><td>乾1+坤8=9</td><td>兑2+艮7=9</td><td>离3+坎6=9</td><td>震4+巽5=9</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></table></div><div class="sum-box">先天八卦：数1-8，相对和=9（阳数），中五不用。竖看立体宇宙，主本体论。</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">KP3 · 后天八卦</span><h2>后天八卦——应用论的方位系统</h2><p class="para-anchored">后天八卦的排列是坎1（北）、坤2（西南）、震3（东）、巽4（东南）、乾6（西北）、兑7（西）、艮8（东北）、离9（南）。核心性质是相对方向之和为10（阴数）：坎1对离9等于10，坤2对艮8等于10，震3对兑7等于10，巽4对乾6等于10。中五居中央，体现阴的特性——阴主静、主内、主藏。</p><p class="para-anchored"><b class="lead">后天八卦横看——所谓横看就是从时空平面理解万物的应用规律。</b>帝出乎震——震为东方为日出为3，这是万物始生之位。后天八卦涉及具体方位应用，它回答的是在具体时空条件下事物如何运行的问题。奇门遁甲排盘用的是后天八卦方位，但配先天八卦数——这就是时空统一的实现方式。</p><div class="tbl-wrap"><table class="dt"><tr><th>卦</th><th>坎</th><th>坤</th><th>震</th><th>巽</th><th>乾</th><th>兑</th><th>艮</th><th>离</th></tr><tr><td>方位</td><td>北</td><td>西南</td><td>东</td><td>东南</td><td>西北</td><td>西</td><td>东北</td><td>南</td></tr><tr><td>后天数</td><td>1</td><td>2</td><td>3</td><td>4</td><td>6</td><td>7</td><td>8</td><td>9</td></tr><tr><td>相对和</td><td>坎1+离9=10</td><td>坤2+艮8=10</td><td>震3+兑7=10</td><td>巽4+乾6=10</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></table></div><div class="sum-box">后天八卦：数1-9，相对和=10（阴数），中五居中。横看时空平面，主应用论。</div></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">KP3 · 先后天对比</span><h2>先天vs后天——时空统一的数学根基</h2><div class="tbl-wrap"><table class="dt"><tr><th>对比项</th><th>先天八卦</th><th>后天八卦</th></tr><tr><td>数范围</td><td>1～8（中五不用）</td><td>1～9（中五居中）</td></tr><tr><td>排列起点</td><td>乾1（天在上）</td><td>坎1（帝出乎震→震3）</td></tr><tr><td>相对和</td><td>9（阳数）</td><td>10（阴数）</td></tr><tr><td>看的维度</td><td>竖看（立体宇宙·本体论）</td><td>横看（时空平面·应用论）</td></tr><tr><td>用途</td><td>描述万物本源结构</td><td>描述具体时空运行</td></tr><tr><td>奇门中的角色</td><td>提供数（先天数配宫）</td><td>提供方位（后天宫位排盘）</td></tr></table></div><p>邵康节用后天八卦图配先天八卦数，正是将时间（先天数）与空间（后天方位）统一在一个模型中。比如乾宫：后天方位在西北，先天数是1——方位用后天、数用先天，时空就在一个宫位上统一了。这是奇门遁甲时空统一论的数学根基，也是为什么奇门能同时判断时间和空间信息的原因。</p><p><b class="lead">初学者最易混淆的问题是：</b>乾宫到底是1还是6？答案取决于你在用先天数还是后天数。先天数乾=1，后天数乾=6。排盘时需明确用哪套数——这就是下页九宫含数要解决的问题。</p></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">KP4 · 河图洛书</span><h2>河图洛书与大衍之数</h2><p class="para-anchored"><b class="lead">河图描述五行生成数：</b>天一生水地六成之（北），地二生火天七成之（南），天三生木地八成之（东），地四生金天九成之（西），天五生土地十成之（中）。生数（1/2/3/4/5）是天数，成数（6/7/8/9/10）是地数，生数+5=成数。河图是五行理论的数理根基，回答的是五行从何生成的问题。</p><p class="para-anchored"><b class="lead">洛书即九宫数，纵横皆十五，是奇门排盘的数学基础。</b>大衍之数55是天地之数总和（1+2+...+10=55），但起卦用49策——为什么用49不用55？因为55是全体（含不用的6），49是用（留6不用，6是六爻之数）。这个留而不用的思想贯穿奇门：甲干遁藏不用但主宰全局，六仪显用但受甲节制。</p><ul class='steps-list'><li>河图：五行生成数（生数1-5+5=成数6-10），五行理论根基</li><li>洛书：九宫数纵横皆十五，奇门排盘数学基础</li><li>大衍之数：55=全体，49=用（留6不用），遁甲思想的数理源头</li></ul><div class="sum-box">河图→五行生成，洛书→九宫排盘，大衍55用49→遁甲留甲用仪的数理根基。</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">KP5 · 九宫含数</span><h2>九宫含数——每个宫位的三组数字</h2><p class="para-anchored"><b class="lead">每个宫位含三组数字：</b>先天八卦数、后天八卦数、五行数。以乾宫（西北）为例：先天数=1、后天数=6、五行数=6（金）。以离宫（南）为例：先天数=3、后天数=9、五行数=9（火）。以坎宫（北）为例：先天数=6、后天数=1、五行数=1（水）。注意坎宫的先天数6和后天数1是反过来的——这是因为先天和后天是两套不同的排列体系。</p><p class="para-anchored"><b class="lead">排盘时需明确用哪套数字。</b>判断九星旺相休囚用五行数（星五行与宫五行论生克），判断宫位方位用后天数（后天八卦方位），判断本体属性用先天数。这是初学者最易混淆处——不是所有时候都用同一个数。搞清楚三套数的用途分工，是排盘不犯错的前提。</p><div class="callout amber"><div class="ci">⚠️</div><div class="cb">易错点TOP2：乾宫是1还是6？取决于用先天数(1)还是后天数(6)。排盘时必须明确用哪套数。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>宫位</th><th>先天数</th><th>后天数</th><th>五行数</th><th>排盘用途</th></tr><tr><td>乾（西北）</td><td>1</td><td>6</td><td>6（金）</td><td>方位用后天6，旺衰用五行金</td></tr><tr><td>兑（西）</td><td>2</td><td>7</td><td>7（金）</td><td>方位用后天7，旺衰用五行金</td></tr><tr><td>离（南）</td><td>3</td><td>9</td><td>9（火）</td><td>方位用后天9，旺衰用五行火</td></tr><tr><td>震（东）</td><td>4</td><td>3</td><td>3（木）</td><td>方位用后天3，旺衰用五行木</td></tr><tr><td>坎（北）</td><td>6</td><td>1</td><td>1（水）</td><td>方位用后天1，旺衰用五行水</td></tr></table></div><div class="sum-box">三套数分工：先天数→本体属性，后天数→方位应用，五行数→旺衰判断。</div></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">KP5 · 数据速查</span><h2>九宫含数速查卡</h2><p><b class="lead">将九宫含数整理为数据卡，排盘时快速查阅。</b>注意中宫没有先天数（先天八卦中五不用），只有后天数5和五行数5（土）。</p><p><b class="lead">四正宫（坎离震兑）的先天数和后天数是交叉的：</b>坎先天6后天1、离先天3后天9、震先天4后天3、兑先天2后天7。四隅宫（乾坤艮巽）则相对规律：乾先天1后天6、坤先天8后天2、艮先天7后天8、巽先天5后天4。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">15</div><div class="kl">纵横皆十五</div><div class="kd">每行/列/对角线和</div></div><div class="kpi green"><div class="kv">3套</div><div class="kl">每宫三组数</div><div class="kd">先天/后天/五行</div></div><div class="kpi amber"><div class="kv">9</div><div class="kl">先天相对和</div><div class="kd">阳数，中五不用</div></div><div class="kpi red"><div class="kv">10</div><div class="kl">后天相对和</div><div class="kd">阴数，中五居中</div></div></div><div class="sum-box">排盘口诀：方位看后天，旺衰看五行，本体看先天。</div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">KP6 · 三式定位</span><h2>三式分工——奇门在预测术体系中的位置</h2><p class="para-anchored"><b class="lead">三式是中国古代最高层次的三种预测术。</b>太乙神数占君国大事、天下大势，由司天监掌管，用于推算年运国运，如某年是否有战争、某朝代气数如何。奇门遁甲占行军打仗、攻守进退，为兵家所重，如某日某时出兵是否吉利、某方是否有伏兵。六壬神课占日用百事、民间琐事，应用最广，如寻物、问病、求财。</p><p class="para-anchored"><b class="lead">三式同源于易学象数理体系，各有侧重。</b>太乙用九宫推年运，奇门用九宫推军事和人事，六壬用十二神将推日用。奇门遁甲被称为中国方术之王，原因有二：一是模型最复杂完整（天地人神四盘、64个用神，远超六爻6个和大六壬12个），二是理致最强（《四库全书》评最有理致，有明确的数学结构和）。</p><div class="tbl-wrap"><table class="dt"><tr><th>式</th><th>太乙神数</th><th>奇门遁甲</th><th>六壬神课</th></tr><tr><td>占什么</td><td>君国大事·天下大势</td><td>行军打仗·攻守进退</td><td>日用百事·民间琐事</td></tr><tr><td>谁掌管</td><td>司天监</td><td>兵家</td><td>民间</td></tr><tr><td>用神数</td><td>—</td><td>64个</td><td>12个</td></tr><tr><td>模型复杂度</td><td>中</td><td>最高</td><td>较低</td></tr></table></div><div class="sum-box">奇门遁甲 = 中国方术之王，64个用神，四盘全息模型，《四库》评最有理致。</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">历史脉络</span><h2>奇门名称演变——从阴符到奇门遁甲</h2><p><b class="lead">奇门遁甲的名称经历了四次演变，每次演变都反映了对其核心思想理解的深化。</b>从阴符到六甲到遁甲再到奇门遁甲，名称越来越精确地描述了其核心机制。</p><p>最终定名奇门遁甲，奇指三奇（乙丙丁），门指八门（开休生伤杜景死惊），遁指甲干遁藏于六仪。这个名称完整概括了奇门遁甲的三大核心要素。</p><div class="tl-v"><div class="tl-item"><div class="tt"><span class="tm">先秦</span>阴符</div><div class="td">暗藏符节之意，最初称阴符，强调隐秘性</div></div><div class="tl-item"><div class="tt"><span class="tm">汉</span>六甲</div><div class="td">以六甲为核，称六甲，强调甲干的核心地位</div></div><div class="tl-item"><div class="tt"><span class="tm">唐</span>遁甲</div><div class="td">遁藏甲干之意，称遁甲，强调甲遁于六仪</div></div><div class="tl-item"><div class="tt"><span class="tm">宋后</span>奇门遁甲</div><div class="td">以三奇六仪为用、八门为断，最终定名奇门遁甲</div></div></div><div class="sum-box">名称即机制：奇=三奇(乙丙丁)，门=八门，遁甲=甲干遁藏于六仪。</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">军事起源</span><h2>十天干军事化——元帅遁藏与三奇制庚</h2><p class="para-anchored"><b class="lead">奇门遁甲的军事起源体现在十天干的军事化角色分配。</b>甲是元帅，遁藏不露——这就是遁甲的遁字含义，甲不直接出现而是隐于六仪之下。乙丙丁是文官谋士和武官卫士，合称三奇。戊己庚辛壬癸是六面旗帜仪仗队，合称六仪。六甲隐六仪：甲子隐戊、甲戌隐己、甲申隐庚、甲午隐辛、甲辰隐壬、甲寅隐癸。</p><p class="para-anchored"><b class="lead">六仪排成固定队形：</b>戊→己→庚→辛→壬→癸→丁→丙→乙，此为连环阵、太极圈，无头无尾如迷魂阵。庚为太白金星、贼星、最凶之干。三奇能制庚——乙奇合庚（夫妻合好）、丙奇克庚（权威压制）、丁奇克庚（柔中制刚）。以奇制庚、化凶为吉，这是奇门遁甲奇字的核心所在。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">核心机制：甲遁于六仪（甲不现→六仪代甲），三奇制庚（乙合庚/丙克庚/丁克庚→化凶为吉）。</div></div><div class="tbl-wrap"><table class="dt"><tr><th>天干</th><th>军事角色</th><th>奇门属性</th></tr><tr><td>甲</td><td>元帅（遁藏不露）</td><td>遁甲之本</td></tr><tr><td>乙</td><td>文官谋士</td><td>日奇·制庚(合)</td></tr><tr><td>丙</td><td>武官卫士</td><td>月奇·制庚(克)</td></tr><tr><td>丁</td><td>军需官</td><td>星奇·制庚(克)</td></tr><tr><td>戊己庚辛壬癸</td><td>六面旗帜仪仗队</td><td>六仪·甲所遁处</td></tr></table></div><div class="sum-box">遁=甲藏于仪，奇=三奇制庚。这是奇门遁甲名称的完整含义。</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">数学原理</span><h2>九宫八卦阵的数学奥秘</h2><p class="para-anchored"><b class="lead">洛书九宫为三级幻方，横、竖、对角线三数之和均为十五。</b>此数学结构使九宫具有旋转对称性——无论将九宫格旋转90度、180度、270度，其纵横皆十五的性质不变。排成横∞字形迷魂阵后，无论从哪个方向进攻，面对的防御力量均等（数字之和都是15），此即奇门九宫阵的数学奥秘。</p><p class="para-anchored">阳遁从一宫到九宫顺排六仪（戊在一宫起），逆排三奇（丁在九宫起），象征阳气上升、兵势外张。阴遁从九宫到一宫逆排六仪（戊在九宫起），顺排三奇（丁在一宫起），象征阴气下降、兵势内敛。甲子戊在几宫即为几局，共十八局（阳遁九局+阴遁九局）。这就是奇门遁甲18局的数学来源。</p><div class="sum-box">九宫阵=三级幻方→旋转对称→防御均等。阳遁9局+阴遁9局=18局。</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">KP7 · 理论根基</span><h2>易学思维六大论——奇门的理论根基</h2><p class="para-anchored"><b class="lead">奇门遁甲的理论根基是易学思维六大论。</b>天人合一论指出宇宙是统一体，人受天地运行规律支配，但天人合一不是简单的天定人事，而是天人互动、动态平衡——奇门正是通过模拟天地人神四维时空来预测人事。太极阴阳论中，阳遁阴遁、主与客、吉与凶都是阴阳对立统一的具体体现。</p><p class="para-anchored"><b class="lead">五行关系论用生克制化判断格局吉凶，旺相休囚取决于月令五行旺衰。</b>时空统一论将天时（节气）、地利（九宫）、人和（八门）、神助（八神）统一于一盘。宇宙全息论指出一盘中天盘地盘人盘神盘互为全息映射，从一个宫位可推知全局。穷通分合论揭示事物发展遵循螺旋上升，泰卦最好（阴阳相交）、否卦最差（天地不交）。</p><ul class='steps-list'><li>①天人合一：天人互动动态平衡，非天定人事</li><li>②太极阴阳：阳遁阴遁/主客/吉凶=阴阳对立统一</li><li>③五行关系：生克制化断吉凶，月令定旺衰</li><li>④时空统一：天时+地利+人和+神助统一于一盘</li><li>⑤宇宙全息：一盘四盘互为全息，一宫推全局</li><li>⑥穷通分合：泰卦最好(相交)，否卦最差(不交)</li></ul><div class="sum-box">六大论是奇门的理论根基：天人合一(互动)→时空统一(四盘)→宇宙全息(一宫推全局)。</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">课堂检测</span><h2>先后天八卦与核心概念判断</h2><div class='quiz-q'><p><b>Q1. 先天八卦中乾卦的数字是多少？相对的坤卦是多少？两者之和？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,0)'>A. 乾1坤8，和9</div><div class='quiz-opt' onclick='reveal(this,0,1,0)'>B. 乾6坤2，和8</div><div class='quiz-opt' onclick='reveal(this,0,2,0)'>C. 乾1坤8，和10</div><div class='quiz-opt' onclick='reveal(this,0,3,0)'>D. 乾6坤2，和8</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 先天八卦乾1坤8，相对和=9（阳数）。后天八卦乾6坤2，相对和=8不是10——注意坤后天数是2不是4。</div></div><div class='quiz-q'><p><b>Q2. 后天八卦中，帝出乎震的震卦在哪个方位？数字是多少？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,0)'>A. 东方，数3</div><div class='quiz-opt' onclick='reveal(this,1,1,0)'>B. 南方，数9</div><div class='quiz-opt' onclick='reveal(this,1,2,0)'>C. 西方，数7</div><div class='quiz-opt' onclick='reveal(this,1,3,0)'>D. 北方，数1</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 帝出乎震——震为东方为日出，后天数3。这是后天八卦排列的起点逻辑。</div></div><div class='quiz-q'><p><b>Q3. 遁甲的遁字，准确含义是？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 逃跑</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 遁藏（甲干隐于六仪之下）</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 消失</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 回避</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 遁=遁藏，甲干遁藏于六仪之下不直接出现。甲子隐戊、甲戌隐己...这是奇门的核心设计思想。</div></div><div class='quiz-q'><p><b>Q4. 三奇制庚的核心机制是？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,1)'>A. 三奇生庚</div><div class='quiz-opt' onclick='reveal(this,3,1,1)'>B. 乙合庚+丙克庚+丁克庚</div><div class='quiz-opt' onclick='reveal(this,3,2,1)'>C. 三奇同庚</div><div class='quiz-opt' onclick='reveal(this,3,3,1)'>D. 庚克三奇</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 乙奇合庚（夫妻合好）、丙奇克庚（权威压制）、丁奇克庚（柔中制刚）。以奇制庚、化凶为吉。</div></div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">AI角色 · 导览员</span><h2>课堂AI环节：导览员（先猜后问·找AI的错）</h2><p><b class="lead">本课AI角色是导览员，对应概念入门课型。</b>导览员带你逛一圈奇门遁甲的层次，每站先问你再讲——导游不发讲解器，边走边聊。核心原则：AI提供材料和对抗，理解与判断归学生。</p><p><b class="lead">使用方法：</b>复制下方提示词粘贴给AI，开始导览。注意——AI在讲解中会故意保留一处错误（如把先天八卦相对和为9说成和为10），你需要找出这处错误。找AI的错的过程就是深度理解的过程。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲导览员。带我逛一圈奇门遁甲的层次，规则：
+①第一站：问我"你觉得先天八卦和后天八卦谁更接近本质？"——我答后纠错讲层次
+②第二站：让我在纸上排一个洛书九宫格，然后解释它经历了哪几层
+③第三站：问我一个有陷阱的概念题——根据我的答案讲分层
+④最后给我一个本课核心概念的生活类比（要新意，不要用课本里的）
+每站先问我再讲——导游不发讲解器，边走边聊。
+纪律提醒：①核心作业学生手写——AI出思想不出文字；②先猜再问——先写猜测再让AI讲解；③AI使用要声明——改的痕迹是证据；④每课找一次AI的错——它值得信任，更值得验证。</div></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">AI角色 · 预习官</span><h2>课前预习官（层1·课前用）</h2><p><b class="lead">课前用预习官出3道概念预测题，学生先猜不评分。</b>猜完公布答案并讲解。目的是激活先验认知，让带着问题来上课。</p><p><b class="lead">使用方法：</b>课前一天复制提示词粘贴给AI，完成3道预测题。课上对照答案，看自己猜对了多少。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲预习官。出3道概念预测题让学生先猜：
+①九宫格的"纵横皆十五"——你觉得为什么是15不是其他数？
+②先天八卦和后天八卦——你觉得哪个更"早"？
+③"遁甲"的"遁"——你觉得是什么意思？
+先猜不评分，猜完公布答案并讲解。</div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">总结</span><h2>本课总结与下节预告</h2><ul class="steps-list"><li>奇门遁甲 = 九宫格（洛书数学·纵横皆十五）+ 四盘（天地人神·下课讲）+ 时空统一（先后天八卦合用）</li><li>遁甲 = 甲干遁藏于六仪（甲不现→六仪代甲），三奇制庚（乙合/丙克/丁克→化凶为吉）</li><li>它是象数理时空模型，不是纯神秘主义——《四库全书》评最有理致</li><li>九宫含三套数：先天数（本体）+ 后天数（方位）+ 五行数（旺衰），排盘时需明确用哪套</li><li>易学六大论是理论根基：天人合一（互动）→ 时空统一（四盘）→ 宇宙全息（一宫推全局）</li></ul><div class="sum-box">核心三句：①九宫格=洛书幻方（纵横皆十五），②遁甲=甲藏仪+奇制庚，③时空统一=先后天八卦合用。</div><div class="sum-box"><b>🔗 下节预告：</b>今天搭好了九宫格这个棋盘，但棋盘上还没有棋子。下节课认识奇门的符号语言——天干地支与三奇六仪，把它们放到九宫格上，就开始接近真正的排盘了。</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>本课产出：九宫格模型认知 → 第2课输入：排布干支的宫位框架</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "同学们好，欢迎来到奇门遁甲课程的第一课。今天这节课的主题是\"帝王之学的时空模型\"。说到奇门遁甲，很多人第一反应是神秘、是迷信、是江湖术士的把戏。但我要告诉大家，奇门遁甲是三式之一——太乙、奇门、六壬，号称帝王之学，《四库全书》评价它\"于方技之中最有理致\"。注意\"最有理致\"这四个字，意味着它不是纯神秘主义，而是有数学结构和逻辑体系的。今天50分钟，我们要搭好九宫格这个棋盘，为后面七课的排盘、断卦、预测命运奠定基础。本课的产出是九宫格模型认知，它是下一课天干地支符号语言的输入。"}, {"idx": 1, "title": "课程地图", "text": "先看课程地图。这门课一共八课，是一个金字塔结构，从基础到结业层层递进。第一课总览，搭九宫格棋盘。第二课符号，学天干地支和三奇六仪。第三课要素，认识九星八门八神这天地人神四盘。第四课操作，学排盘七步骤——这是核心能力课。第五课方法，学用神和分析判断。第六课进阶，学吉凶格局和十干克应。第七课实战，学定应期和主客决策。第八课结业，学奇门终身局与四柱合参，手动排一个终身局。每课的产出是下一课的输入，比如今天产出九宫格模型，下节课就要往这个格子里放干支符号。你现在站在金字塔的塔基，目标是八课后能独立排盘断卦。"}, {"idx": 2, "title": "课程定位", "text": "先定位奇门遁甲在预测术体系中的位置。三式是中国古代最高层次的三种预测术。太乙神数占君国大事天下大势，由司天监掌管，推算年运国运。奇门遁甲占行军打仗攻守进退，为兵家所重——诸葛亮借东风就是奇门的经典应用。六壬神课占日用百事民间琐事，应用最广。奇门遁甲被称为中国方术之王，原因有二：一是模型最复杂完整，有天地人神四盘、64个用神，远超六爻的6个和大六壬的12个；二是理致最强，有明确的数学结构。本课程的认知前提是：我们以数理结构理解奇门，不以神秘主义对待奇门。请记住这一点，它决定了你后面七课的学习态度。"}, {"idx": 3, "title": "九宫格太极认知原理", "text": "现在进入核心知识点。九宫格从哪里来？从切西瓜开始。太极——就是一个球体——沿不同方向切4刀，得到9块，这就是井字九宫格。这个切割过程包含了0到9全部十个数字：0是未切之前的完整太极，代表混沌未分的状态；1到8是八次切割产生的八个方位，对应八卦；9是最终得到的九块。这不是巧合，而是太极生两仪、两仪生四象、四象生八卦的数学展开。关键认知来了：先天八卦用1到8，中五不用，体现阳的特性——阳主动主外主显。九宫格用1到9，五居中央，体现阴的特性——阴主静主内主藏。这不是随意编号，而是阳遁和阴遁的数学根基。后面排盘时阳遁顺排阴遁逆排，方向差异正源于此。"}, {"idx": 4, "title": "洛书九宫", "text": "洛书九宫是奇门排盘的数学基础。口诀是\"戴九履一，左三右七，四二为肩，八六为足，中间为五\"。翻译一下：南方戴九是离，北方履一是坎，东方左三是震，西方右七是兑，左上肩四是巽，右上肩二是坤，左下足八是艮，右下足六是乾，中央是五。核心性质：每行、每列、对角线之和均为15。比如第一行4+9+2=15，第一列4+3+8=15，对角线4+5+6=15。这就是三级幻方。奇数居四正加中央，偶数居四隅。提醒大家一个易错点：四二为肩是左上四、右上二，不是左二右四！填完一定要用纵横皆十五来验证。这个数学结构使九宫具有旋转对称性，无论从哪个方向看数字之和都相等——这就是九宫八卦阵的数学奥秘。"}, {"idx": 5, "title": "九宫格填空练习", "text": "来做三道填空题。第一题：已知坎宫是1，离宫是9，中央是多少？对角线坎-中-离：1+中+9=15，所以中央=5。这就是\"中间为五\"的由来。第二题：巽宫是4，震宫是3，艮宫是多少？第一列4+3+艮=15，所以艮=8。口诀\"八六为足\"，左下足八。第三题：奇数和偶数的分布规律？奇数居四正方位加中央，偶数居四隅方位。这三道题如果你都答对了，说明九宫格的基本结构已经掌握了。如果答错了，回去重填九宫格，用纵横皆十五约束来验证每一行每一列。"}, {"idx": 6, "title": "先天八卦", "text": "进入先天八卦。先天八卦的排列是乾1兑2离3震4巽5坎6艮7坤8，按1到8顺序排。核心性质：相对方向之和为9，这是阳数。乾1对坤8等于9，兑2对艮7等于9，离3对坎6等于9，震4对巽5等于9。中五不用，体现阳的特性。先天八卦竖看——所谓竖看就是从立体角度理解宇宙的本源结构。乾为天在上坤为地在下，这是宇宙本体定位。离为火坎为水，火在上水在下，这是自然现象的本源秩序。先天八卦不涉及具体方位应用，它回答的是万物从何而来、本体结构是什么的问题。记住：先天八卦管本体，不管应用。"}, {"idx": 7, "title": "后天八卦", "text": "后天八卦的排列完全不同：坎1在北、坤2在西南、震3在东、巽4在东南、乾6在西北、兑7在西、艮8在东北、离9在南。核心性质：相对方向之和为10，这是阴数。坎1对离9等于10，坤2对艮8等于10，震3对兑7等于10，巽4对乾6等于10。中五居中央，体现阴的特性。后天八卦横看——从时空平面理解万物的应用规律。帝出乎震，震为东方为日出为3，这是万物始生之位。后天八卦涉及具体方位应用，回答的是在具体时空条件下事物如何运行。奇门遁甲排盘用的是后天八卦方位，但配先天八卦数——这就是时空统一的实现方式，下一页详细讲。"}, {"idx": 8, "title": "先天vs后天对比", "text": "来对比先天和后天。数范围：先天1到8中五不用，后天1到9中五居中。排列起点：先天从乾1开始（天在上），后天从坎1开始（帝出乎震到震3）。相对和：先天是9阳数，后天是10阴数。看的维度：先天竖看立体宇宙本体论，后天横看时空平面应用论。奇门中的角色：先天提供数，后天提供方位。邵康节用后天八卦图配先天八卦数，将时间和空间统一在一个模型中。比如乾宫：后天方位在西北，先天数是1——方位用后天、数用先天，时空就在一个宫位上统一了。初学者最易混淆：乾宫到底是1还是6？先天数乾等于1，后天数乾等于6，取决于你用哪套数。这就是下页九宫含数要解决的问题。"}, {"idx": 9, "title": "河图洛书与大衍之数", "text": "河图描述五行生成数：天一生水地六成之在北，地二生火天七成之在南，天三生木地八成之在东，地四生金天九成之在西，天五生土地十成之在中。生数1到5是天数，成数6到10是地数，生数加5等于成数。河图是五行理论的数理根基。洛书就是九宫数，纵横皆十五，是奇门排盘的数学基础。大衍之数55是天地之数总和，但起卦用49策——为什么用49不用55？因为55是全体含不用的6，49是用，留6不用，6是六爻之数。这个留而不用的思想贯穿奇门：甲干遁藏不用但主宰全局，六仪显用但受甲节制。理解了这个，就理解了遁甲的核心设计思想。"}, {"idx": 10, "title": "九宫含数", "text": "每个宫位含三组数字：先天八卦数、后天八卦数、五行数。以乾宫为例：先天数1、后天数6、五行数6金。以离宫为例：先天数3、后天数9、五行数9火。以坎宫为例：先天数6、后天数1、五行数1水。注意坎宫的先天数6和后天数1是反过来的——因为先天和后天是两套不同排列体系。排盘时需明确用哪套数字：判断九星旺相休囚用五行数，判断宫位方位用后天数，判断本体属性用先天数。这是初学者最易混淆处——不是所有时候都用同一个数。搞清楚三套数的用途分工，是排盘不犯错的前提。口诀：方位看后天，旺衰看五行，本体看先天。"}, {"idx": 11, "title": "九宫含数速查卡", "text": "把九宫含数整理为数据卡，排盘时快速查阅。核心数据：纵横皆十五、每宫三组数、先天相对和9、后天相对和10。四正宫的先天数和后天数是交叉的：坎先天6后天1、离先天3后天9、震先天4后天3、兑先天2后天7。四隅宫相对规律：乾先天1后天6、坤先天8后天2、艮先天7后天8、巽先天5后天4。中宫没有先天数，只有后天数5和五行数5土。排盘口诀再强调一遍：方位看后天，旺衰看五行，本体看先天。这三句话请记牢，后面排盘会反复用到。"}, {"idx": 12, "title": "三式分工", "text": "详细讲三式分工。太乙神数占君国大事天下大势，司天监掌管，推算年运国运，比如某年是否有战争、某朝代气数如何。奇门遁甲占行军打仗攻守进退，兵家所重，比如某日某时出兵是否吉利、某方是否有伏兵。六壬神课占日用百事民间琐事，应用最广，比如寻物问病求财。三式同源于易学象数理体系各有侧重。奇门遁甲被称为中国方术之王，一是模型最复杂完整——天地人神四盘64个用神，远超六爻6个和大六壬12个；二是理致最强——有明确数学结构和逻辑体系。这也是为什么我们花八课学奇门而不是六爻或六壬——它的信息量和判断力最强。"}, {"idx": 13, "title": "奇门名称演变", "text": "奇门遁甲的名称经历了四次演变。先秦时称阴符，暗藏符节之意，强调隐秘性。汉代称六甲，以六甲为核，强调甲干的核心地位。唐代称遁甲，遁藏甲干之意，强调甲遁于六仪。宋代以后最终定名奇门遁甲，以三奇六仪为用、八门为断。名称即机制：奇指三奇乙丙丁，门指八门开休生伤杜景死惊，遁指甲干遁藏于六仪。这个名称完整概括了奇门遁甲的三大核心要素。每次名称演变都反映了对核心思想理解的深化——从强调隐秘（阴符），到强调甲干（六甲），到强调遁藏（遁甲），到完整描述三要素（奇门遁甲）。"}, {"idx": 14, "title": "十天干军事化", "text": "奇门遁甲的军事起源体现在十天干的军事化角色分配。甲是元帅，遁藏不露——这就是遁甲的遁字含义，甲不直接出现而是隐于六仪之下。乙丙丁是文官谋士和武官卫士，合称三奇。戊己庚辛壬癸是六面旗帜仪仗队，合称六仪。六甲隐六仪：甲子隐戊、甲戌隐己、甲申隐庚、甲午隐辛、甲辰隐壬、甲寅隐癸。六仪排成固定队形戊己庚辛壬癸丁丙乙，是连环阵太极圈，无头无尾如迷魂阵。庚为太白金星贼星最凶之干。三奇能制庚——乙奇合庚是夫妻合好，丙奇克庚是权威压制，丁奇克庚是柔中制刚。以奇制庚化凶为吉，这是奇门遁甲奇字的核心所在。"}, {"idx": 15, "title": "九宫八卦阵数学原理", "text": "洛书九宫为三级幻方，横竖对角线三数之和均为十五。此数学结构使九宫具有旋转对称性——无论旋转90度、180度、270度，纵横皆十五的性质不变。排成横∞字形迷魂阵后，无论从哪个方向进攻，面对的防御力量均等，此即奇门九宫阵的数学奥秘。阳遁从一宫到九宫顺排六仪，逆排三奇，象征阳气上升兵势外张。阴遁从九宫到一宫逆排六仪，顺排三奇，象征阴气下降兵势内敛。甲子戊在几宫即为几局，共十八局——阳遁九局加阴遁九局。这就是奇门遁甲18局的数学来源，也是为什么有阳遁一局到阳遁九局、阴遁一局到阴遁九局的原因。"}, {"idx": 16, "title": "易学思维六大论", "text": "奇门遁甲的理论根基是易学思维六大论。天人合一论：宇宙是统一体，人受天地运行规律支配，但天人合一不是天定人事，而是天人互动动态平衡——奇门通过模拟天地人神四维时空来预测人事。太极阴阳论：阳遁阴遁、主与客、吉与凶都是阴阳对立统一。五行关系论：生克制化判断格局吉凶，旺相休囚取决于月令。时空统一论：天时加地利加人和加神助统一于一盘。宇宙全息论：一盘四盘互为全息映射，一宫可推全局。穷通分合论：泰卦最好阴阳相交，否卦最差天地不交。这六大论是理解奇门的理论框架，后面每课都会用到。"}, {"idx": 17, "title": "先后天八卦判断练习", "text": "来做四道检测题。第一题：先天八卦中乾卦数字是多少？乾1坤8，和9。先天相对和是阳数9。第二题：后天八卦中帝出乎震的震卦在哪个方位？东方，数3。帝出乎震——震为东方为日出，后天数3。第三题：遁甲的遁字准确含义？遁藏，甲干隐于六仪之下不直接出现。不是逃跑、不是消失、不是回避，是遁藏。第四题：三奇制庚的核心机制？乙合庚加丙克庚加丁克庚。乙奇合庚是夫妻合好，丙奇克庚是权威压制，丁奇克庚是柔中制刚。以奇制庚化凶为吉。如果四道全对，说明核心概念掌握了。"}, {"idx": 18, "title": "导览员AI环节", "text": "现在进入AI导览员环节。本课AI角色是导览员，对应概念入门课型。使用方法：复制屏幕上的提示词粘贴给AI，开始导览。导览员会带你逛一圈奇门遁甲的层次，每站先问你再讲。第一站问你先天八卦和后天八卦谁更接近本质，第二站让你排九宫格然后解释层次，第三站问有陷阱的概念题，最后给生活类比。关键环节来了：AI在讲解中会故意保留一处错误——比如把先天八卦相对和为9说成和为10——你需要找出这处错误。找AI的错的过程就是深度理解的过程。记住边界四条：核心作业学生手写，先猜再问，AI使用要声明，每课找一次AI的错。"}, {"idx": 19, "title": "课前预习官", "text": "课前还有一个预习官环节，下次课前一天用。复制提示词粘贴给AI，它会出三道概念预测题：九宫格为什么纵横皆十五、先天和后天谁更早、遁甲的遁什么意思。先猜不评分，猜完公布答案讲解。目的是激活先验认知，让你带着问题来上课。课上对照答案看自己猜对了多少。这个环节不是必须的，但强烈推荐——带着问题听课和空着脑袋听课，效果差三倍。"}, {"idx": 20, "title": "总结与下节预告", "text": "总结三句话。第一句：奇门遁甲等于九宫格加四盘加时空统一——九宫格是洛书幻方纵横皆十五，四盘是天地人神下节课讲，时空统一是先后天八卦合用。第二句：遁甲等于甲藏仪加奇制庚——甲干遁藏于六仪不直接出现，三奇制庚化凶为吉。第三句：它是象数理时空模型不是纯神秘主义——《四库全书》评最有理致。再强调九宫含三套数：先天数管本体、后天数管方位、五行数管旺衰，排盘时需明确用哪套。易学六大论是理论根基。今天搭好了九宫格这个棋盘，但棋盘上还没有棋子。下节课认识奇门的符号语言——天干地支与三奇六仪，把它们放到九宫格上，就开始接近真正的排盘了。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
