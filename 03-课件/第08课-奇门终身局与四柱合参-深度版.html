@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L8</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">🌟</div>
+    <span class="tag">第8课·结业课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">奇门终身局与四柱合参</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">人生命运预测——十三步法与结业交付</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：终身局分析报告（结业交付）</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">本课导览</span><h2>AI角色：分析搭档·结业课——人机协作完成终身局分析</h2><p>本课是8课系列的结业课，将前7课的所有技能——排局、取用神、格局判断、定应期——汇聚到一个终极问题：能否用奇门遁甲预测一个人的一生？答案是肯定的，这就是奇门终身局分析。本课将系统讲解奇门与四柱合参的理论、终身局分析十三步法、排大运方法，并通过毛泽东、林彪等历史人物实例验证。</p><p><b class="lead">AI分析搭档角色的核心价值在于辅助完成复杂的终身局分析。</b>十三步法涉及大量信息处理和综合判断，AI可以辅助梳理分析脉络、验证判断逻辑、补充遗漏维度。但AI是“搭档”而非“替代”——学员必须先自己分析，再用AI验证和补充，确保分析的独立性和准确性。结业作业要求手动排一个奇门终身局并完成占断分析报告。</p><div class="grid-cards"><div class="g-card"><div class="gi">🎯</div><div class="gh">核心目标</div><div class="gb">掌握十三步法、排大运、四柱合参，完成终身局分析报告</div></div><div class="g-card"><div class="gi">🤖</div><div class="gh">AI角色</div><div class="gb">分析搭档：辅助完成终身局分析，人机协作提高效率和准确性</div></div><div class="g-card"><div class="gi">📚</div><div class="gh">语料来源</div><div class="gb">QMS§1-10终身局与四柱合参全部章节</div></div><div class="g-card"><div class="gi">🎓</div><div class="gh">结业交付</div><div class="gb">手动排一个奇门终身局并完成十三步法占断分析报告</div></div></div><div class="sum-box">前7课技能汇聚——排局→取用神→格局判断→定应期→终身局分析</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">QMS§1</span><h2>奇门与四柱结合理论——各有优劣互补合参</h2><p class="para-anchored"><b class="lead">四柱命理与奇门遁甲各有优势和局限，结合使用才能全面把握命运。</b>四柱优势在于入门容易提高难，符号少模型简单，能从宏观把握阴阳平衡、五行流通、天命格局、日主强弱。四柱局限在于符号少导致信息粒度粗，难以精细到具体事件和方位。</p><p class="para-anchored">奇门优势在于模型复杂完整，预测符号多（天地盘干、八门、九星、八神、九宫），更直观具体，能精细到方位、时间、人物关系。奇门局限在于起局复杂，学习曲线陡峭。</p><p class="para-anchored"><b class="lead">结合方法：</b>先列四柱从宏观把握阴阳平衡、五行流通、天命格局、日主强弱，再看奇门终身局从微观把握具体事件、方位、应期。四柱定“命”的大框架，奇门定“运”的具体轨迹。两者合参，既见森林又见树木，是命运预测的最佳方法组合。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">四柱定命的大框架（宏观），奇门定运的具体轨迹（微观），两者合参既见森林又见树木。</div></div><div class="sum-box">四柱宏观把握格局，奇门微观把握细节，合参最佳</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">QMS§1</span><h2>四柱与奇门优势对比</h2><div class="tbl-wrap"><table class="dt"><tr><th>维度</th><th>四柱命理</th><th>奇门遁甲</th></tr><tr><td>入门难度</td><td>入门容易提高难</td><td>入门难提高也难</td></tr><tr><td>符号数量</td><td>少（干支十神）</td><td>多（干门星神宫）</td></tr><tr><td>信息粒度</td><td>粗（宏观格局）</td><td>细（微观事件）</td></tr><tr><td>模型复杂度</td><td>简单</td><td>复杂完整</td></tr><tr><td>方位判断</td><td>弱</td><td>强（九宫方位）</td></tr><tr><td>应期判断</td><td>中</td><td>强（多种应期法）</td></tr><tr><td>学习曲线</td><td>先易后难</td><td>持续陡峭</td></tr><tr><td>合参角色</td><td>定命大框架</td><td>定运具体轨迹</td></tr></table></div><p><b class="lead">以下对比表清晰展示四柱和奇门各自的优势和局限。</b>理解这一对比是掌握合参方法的基础——只有知道各自的强弱，才能取长补短、合理配合。</p></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">QMS§2</span><h2>终身局与问时局合参——命与运的盘面</h2><p class="para-anchored">终身局：以出生年月日时起局，反映人一生的总趋势。终身局是“命”的盘面，展示天赋、格局、大运走向。终身局一经排定，一生不变，是命运分析的基石。</p><p class="para-anchored">问时局：以求测时的年月日时起局，反映近期事件的细节。问时局是“运”的盘面，展示当前运势、近期吉凶。问时局随求测时间变化，反映运势的动态变化。</p><p class="para-anchored"><b class="lead">合参原则：</b>终身局定大趋势（吉凶的大方向），问时局定小细节（具体事件和应期）。两者合参才能既见森林又见树木。例如终身局显示财运总体吉利（大趋势），问时局显示近期有破财之象（小细节），则判断为：总体财运好但近期需谨慎。</p><p class="para-anchored"><b class="lead">出生时间不准的处理：</b>若出生时间不准确，可直接以问时局断终身。问时局虽不如终身局精确，但在求测时刻的时空信息中蕴含了求测人的命运信息，可作终身分析的替代。这一方法在实践中经常使用，因古代出生时间记录不精确的情况较为常见。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">出生时间不准时，可直接以问时局断终身——求测时刻的时空信息蕴含命运信息。</div></div><div class="sum-box">终身局定大趋势，问时局定小细节，合参既见森林又见树木</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">QMS§3</span><h2>地支藏干阴阳属性纠正——张志春纠正千年错误</h2><p class="para-anchored"><b class="lead">这是张志春先生纠正的千年错误，影响深远。</b>地支藏干的阴阳属性应与地支本身的阴阳属性一致——阳支藏阳干、阴支藏阴干。传统说法中部分地支藏干阴阳属性颠倒，是千年传抄错误。</p><p class="para-anchored"><b class="lead">四项纠正：</b>子藏壬水（非癸）——子为阳支，所藏应为阳干壬水。亥藏癸水（非壬）——亥为阴支，所藏应为阴干癸水。午藏丙火（非丁）——午为阳支，所藏应为阳干丙火。巳藏丁火（非丙）——巳为阴支，所藏应为阴干丁火。</p><p class="para-anchored"><b class="lead">纠正原理：</b>阳支藏阳干、阴支藏阴干，阴阳属性一致。例如子为阳水支，所藏天干应为阳水壬而非阴水癸；亥为阴水支，所藏天干应为阴水癸而非阳水壬。这一纠正使地支藏干体系更加自洽，消除了阴阳属性颠倒的矛盾。</p><p class="para-anchored"><b class="lead">实际影响：</b>地支藏干阴阳属性的纠正影响四柱分析中的通根、藏干透出等判断，进而影响日主强弱和用神取法的准确性。张志春先生的这一纠正，是命理学的重要贡献。</p><div class="tbl-wrap"><table class="dt"><tr><th>地支</th><th>阴阳</th><th>传统藏干</th><th>纠正藏干</th><th>纠正原因</th></tr><tr><td>子</td><td>阳支</td><td>癸水</td><td>壬水</td><td>阳支藏阳干</td></tr><tr><td>亥</td><td>阴支</td><td>壬水</td><td>癸水</td><td>阴支藏阴干</td></tr><tr><td>午</td><td>阳支</td><td>丁火</td><td>丙火</td><td>阳支藏阳干</td></tr><tr><td>巳</td><td>阴支</td><td>丙火</td><td>丁火</td><td>阴支藏阴干</td></tr></table></div><div class="sum-box">阳支藏阳干阴支藏阴干——子藏壬亥藏癸午藏丙巳藏丁</div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">QMS§4</span><h2>十格大纲——五吉格顺用与五凶格逆用</h2><p class="para-anchored"><b class="lead">十格大纲是四柱命理的核心格局分类，分五吉格和五凶格两大类：</b></p><p class="para-anchored"><b class="lead">五吉格（顺用）：</b>财格（正财偏财）、官格（正官七杀）、印格（正印偏印）、食格（食神伤官）。吉神顺用——生扶护卫，使吉神力量发挥。例如财格喜食伤生财、官印护官，让吉神力量充分释放。</p><p class="para-anchored"><b class="lead">五凶格（逆用）：</b>杀格（七杀）、伤格（伤官）、枭格（偏印）、刃格（羊刃）。凶神逆用——克制约化，使凶神力量受控。例如杀格喜食制杀、印化杀，让凶神力量受到制约而不为害。</p><p class="para-anchored"><b class="lead">取用神原则：</b>专求月令。月令为月支所藏之神，是格局的源头。先看月令藏何神，定格局名称，再定用神喜忌。吉神顺用（生扶护卫），凶神逆用（克制约化）。这一原则是四柱取用神的根本大法，不可违背。</p><p class="para-anchored"><b class="lead">顺用与逆用的本质区别：</b>顺用是让吉神力量发挥（如财格喜食伤生财），逆用是让凶神力量受控（如杀格喜食制杀）。顺用主富贵安稳，逆用主险中求胜。格局高低取决于用神有力无力、顺逆得当与否。</p><div class="sum-box">专求月令定格局，吉神顺用生扶护卫，凶神逆用克制约化</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">QMS§5</span><h2>奇门终身局分析十三步法</h2><ol class="steps-list"><li>第1步·首辨男女阴阳遁：男命阳遁顺排阴遁逆排，女命阳遁逆排阴遁顺排</li><li>第2步·看值符值使：值符为大局主导之神，值使为执行之门，吉则大局吉</li><li>第3步·看奇门大局：伏吟反吟空亡等全局格局判断，定全局基调</li><li>第4步·竖看日干落宫：日干为求测人，看落何宫临何门星神及旺衰——定命运层次</li><li>第5步·适宜职业：以日干所临九星八门定适宜职业方向</li><li>第6步·发展方位：以开休生三吉门方位定发展方位</li><li>第7步·断财运：以生门为财，看生门与日干关系定财运</li><li>第8步·断官运：以开门为官，看开门与日干关系定官运</li><li>第9步·家庭婚姻：以休门为家庭，看休门与日干关系定家庭婚姻</li><li>第10步·教育：以天辅星为教育，看天辅与日干关系定学业</li><li>第11步·健康：以天芮星为疾病，看天芮与日干关系定健康</li><li>第12步·六亲：年干父母月干兄弟时干子女，看各干与日干关系</li><li>第13步·寿限：以值使门定寿限，结合大运排法推定</li></ol><div class="sum-box">十三步法覆盖命运全维度：阴阳遁→值符值使→大局→日干→职业方位→财官婚学健→六亲寿限</div></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">QMS§6</span><h2>日干落宫五层次——命运等级判定</h2><p class="para-anchored"><b class="lead">日干落宫的合局程度分五个层次，决定人的命运等级。</b>这是十三步法第4步的核心内容，也是终身局分析中最重要的判断之一：</p><p class="para-anchored"><b class="lead">第一层完全合局：</b>日干旺相、临吉门吉星吉神、无冲克刑害——大富大贵之命。此层次最为罕见，日干力量充分且环境全力支持，主一生顺遂大富大贵。</p><p class="para-anchored"><b class="lead">第二层基本合局：</b>日干旺相、临吉门但星神有瑕疵——富贵之命。日干力量充分但环境有小瑕疵，主富贵但略有波折。</p><p class="para-anchored"><b class="lead">第三层半合局：</b>日干中和、吉凶参半——中层之命，普通富贵。日干力量中和环境吉凶参半，主普通人中的小康富贵。</p><p class="para-anchored"><b class="lead">第四层失局有气：</b>日干衰但有气（通根有源）、临凶门但有救应——下等之命，辛苦但有转机。日干力量不足但有根基，主辛苦劳碌但有翻身机会。</p><p class="para-anchored"><b class="lead">第五层完全失局：</b>日干死绝、临凶门凶星凶神、无救应——底层之命，多灾多难。日干力量极度不足且环境全力打压，主一生多灾多难。</p><div class="tbl-wrap"><table class="dt"><tr><th>层次</th><th>条件</th><th>命运等级</th></tr><tr><td>完全合局</td><td>日干旺相+吉门吉星吉神+无冲克</td><td>大富大贵</td></tr><tr><td>基本合局</td><td>日干旺相+吉门+星神有瑕疵</td><td>富贵</td></tr><tr><td>半合局</td><td>日干中和+吉凶参半</td><td>中层普通</td></tr><tr><td>失局有气</td><td>日干衰有气+凶门有救应</td><td>下等辛苦</td></tr><tr><td>完全失局</td><td>日干死绝+凶门凶星凶神+无救应</td><td>底层多灾</td></tr></table></div><div class="sum-box">日干落宫五层次定命运等级：完全合局大富大贵到完全失局底层多灾</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">QMS§7</span><h2>排大运——一宫15年六步90年</h2><p class="para-anchored"><b class="lead">奇门终身局排大运的方法与四柱排大运不同，基于九宫的空间布局：</b></p><p class="para-anchored"><b class="lead">一宫代表15年：</b>九宫中每宫代表15年人生运势。九宫对应九个15年阶段，覆盖人一生的主要时期。</p><p class="para-anchored"><b class="lead">六步大运：</b>1-15岁、16-30岁、31-45岁、46-60岁、61-75岁、76-90岁，共六步大运覆盖90年。六步大运对应六个宫位，每步15年。</p><p class="para-anchored">排法：从出生年地支所在宫起，顺时针排大运。如出生年地支为子，子在一宫，则1-15岁在一宫、16-30岁在顺时针下一宫，依此类推排满六步。</p><p class="para-anchored"><b class="lead">大运吉凶判断：</b>每步大运看所落宫的八门、九星、八神判断该15年的运势吉凶。吉门吉星吉神主该运吉，凶门凶星凶神主该运凶。同时结合日干与大运宫位的关系——日干生克大运宫位五行，判断大运对日干的影响。</p><p class="para-anchored"><b class="lead">大运分析与十三步法的关系：</b>排大运是十三步法中第13步寿限判断的重要依据。若某步大运临死门凶星且克日干，可能主该运有大灾或寿终。大运分析将命运从静态判断推向动态追踪。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">排大运从出生年地支所在宫起顺时针排，一宫15年六步90年，是寿限判断的重要依据。</div></div><div class="sum-box">一宫15年六步90年，从出生年地支宫顺时针排，看门星神判断吉凶</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">QMS§8</span><h2>实例分析——毛泽东终身局</h2><div class="case-card"><div class="case-head">毛泽东：癸巳年甲子月丁酉日甲辰时</div><p class="case-body">毛泽东的四柱为癸巳年、甲子月、丁酉日、甲辰时。奇门终身局起局后，天禽星为值符、生门为值使，为大吉之局。</p><p class="case-body">天禽星值符主中正之德，象征以中正之道统领全局。天禽星居中宫临制八方，与毛泽东“以中央统御天下”的历史地位高度吻合。生门值使主财利民生，象征执行层面以经济民生为重。</p><p class="case-body">日干丁火旺相（得月令甲木生扶），临吉门吉星，属于完全合局层次——大富大贵之命。大运顺排，早年中年皆行吉运，主一生运势顺遂。</p><div class="case-metrics"><div class="cm"><div class="cm-v">天禽星</div><div class="cm-l">值符</div></div><div class="cm"><div class="cm-v">生门</div><div class="cm-l">值使</div></div><div class="cm"><div class="cm-v">完全合局</div><div class="cm-l">命运层次</div></div><div class="cm"><div class="cm-v">大富大贵</div><div class="cm-l">命运等级</div></div></div></div><p class="hl">天禽星值符居中临制八方+生门值使主民生=大富大贵以中央统御天下</p></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">QMS§9</span><h2>实例分析——林彪终身局</h2><div class="case-card"><div class="case-head">林彪：丁未年辛亥月庚寅日己卯时</div><p class="case-body">林彪的四柱为丁未年、辛亥月、庚寅日、己卯时。奇门终身局起局后，天蓬星照命、九星伏吟、晚年伤门凶终。</p><p class="case-body">天蓬星为大凶之星，照命主一生多险多灾。但天蓬星亦主兵戈争战，故早年从军有战功。九星伏吟主全局闭塞停滞，象征人生格局受限、难以突破天花板。</p><p class="case-body">晚年行伤门运，伤门主伤灾刑伤，值使门临伤门主寿限有碍。终身局显示先吉后凶、晚年凶终之命，与林彪实际历史结局高度吻合——早年战功赫赫，晚年折戟沉沙。</p><div class="case-metrics"><div class="cm"><div class="cm-v">天蓬星</div><div class="cm-l">照命</div></div><div class="cm"><div class="cm-v">九星伏吟</div><div class="cm-l">大局</div></div><div class="cm"><div class="cm-v">晚年伤门</div><div class="cm-l">凶终</div></div><div class="cm"><div class="cm-v">先吉后凶</div><div class="cm-l">命运轨迹</div></div></div></div><p class="hl">天蓬星照命主多险+九星伏吟主格局受限+晚年伤门主凶终=先吉后凶之命</p></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">QMS§10</span><h2>实例分析——韦千里终身局</h2><p class="para-anchored"><b class="lead">韦千里的四柱为辛亥年、辛卯月、庚子日、庚辰时。</b>韦千里为近代命理大家，著有《千里命稿》等经典著作。其命局展示“命理学者”的命格特征。</p><p class="para-anchored"><b class="lead">分析要点：</b>印星旺相主学术研究，食伤泄秀主才华横溢。日干庚金虽不得月令，但有辰土生扶，属于失局有气层次——辛苦但有转机之命。韦千里一生致力于命理研究，虽非大富大贵，但在学术领域成就斐然，正是“失局有气”的典型表现。</p><p class="para-anchored"><b class="lead">教学意义：</b>韦千里案例展示奇门终身局不仅能断富贵吉凶，还能断职业适宜性和人生方向。印星旺相主学术、食伤泄秀主才华，这些特征指向“命理学者”的职业方向，体现了奇门终身局分析对职业判断的准确性。此例也说明命运层次不等于人生价值——失局有气之命虽非大富大贵，但在适合的领域同样可以成就卓越。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">命运层次不等于人生价值——韦千里失局有气之命，在命理学术领域成就卓越。</div></div><div class="sum-box">韦千里印星旺相主学术+食伤泄秀主才华=命理学者命格，职业判断准确</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">AI融入</span><h2>AI终身局分析搭档提示词——十三步法辅助分析</h2><p><b class="lead">以下提示词用于让AI扮演终身局分析搭档角色。</b>学员提供奇门终身局信息（出生年月日时、起局结果），AI将按十三步法辅助分析，每步给出分析过程和结论，最后给出综合命运评估和人生建议。使用时注意：AI是“搭档”而非“替代”，学员必须先自己分析，再用AI验证和补充。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲终身局分析搭档。我将给你一个奇门终身局信息（出生年月日时、起局结果），请按十三步法辅助分析：
+
+【分析步骤】
+1. 首辨男女阴阳遁
+2. 看值符值使——判断大局
+3. 看奇门大局——伏吟反吟空亡
+4. 竖看日干落宫——判断命运层次
+5. 适宜职业——以九星八门定方向
+6. 发展方位——以三吉门定方位
+7. 断财运——生门与日干关系
+8. 断官运——开门与日干关系
+9. 家庭婚姻——休门与日干关系
+10. 教育——天辅星与日干关系
+11. 健康——天芮星与日干关系
+12. 六亲——年月时干与日干关系
+13. 寿限——值使门与日干关系
+
+【输出要求】
+每步给出分析过程和结论，最后给出综合命运评估和人生建议。
+请在我提供的信息基础上分析，不要编造未给出的信息。</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">AI融入</span><h2>AI四柱奇门合参器提示词——宏观微观结合</h2><p><b class="lead">以下提示词用于让AI扮演四柱奇门合参器角色。</b>学员提供四柱信息，AI先做四柱宏观分析（阴阳平衡、五行流通、天命格局、日主强弱），再根据四柱推断适宜的奇门终身局特征，给出需要重点关注的命运维度和奇门分析重点步骤。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是四柱奇门合参器。我将给你一个人的四柱信息，请：
+1. 先做四柱宏观分析：阴阳平衡、五行流通、天命格局、日主强弱
+2. 根据四柱推断适宜的奇门终身局特征
+3. 给出需要重点关注的命运维度（财运/官运/健康/婚姻等）
+4. 建议奇门终身局分析的重点步骤
+
+注意：四柱分析定大框架，奇门分析定具体轨迹，两者合参。</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">结业金句</span><div class="quote-big"><div class="qi">❝</div><div class="qt">四柱定命之大框架，奇门定运之具体轨迹，两者合参既见森林又见树木。</div><div class="qs">奇门遁甲终身局合参总则</div></div><p><b class="lead">这条总则浓缩了奇门终身局分析的核心方法论。</b>四柱从宏观把握阴阳平衡、五行流通、天命格局、日主强弱，定下命运的“大框架”——是富是贵、是吉是凶、格局高低。奇门从微观把握具体事件、方位、应期，定下命运的“具体轨迹”——何时发财、何方发展、何事吉凶。</p><p><b class="lead">两者合参的意义在于：</b>仅有四柱则知其然不知其所以然（知富贵而不知何时何方），仅有奇门则见树木不见森林（知细节而不知全局格局）。合参才能既把握全局又洞察细节，做出最准确的命运预测和人生指导。</p><div class="sum-box">四柱宏观+奇门微观=完整命运预测，这是终身局分析的核心方法论</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">课程回顾</span><h2>8课技能链统计——从排局到终身局</h2><p><b class="lead">回顾8课构建的完整技能链，每课产出的能力都是下节课的输入，形成层层递进的技能体系。</b>以下统计展示8课的核心产出和技能递进关系。</p><div class="kpi-row"><div class="kpi blue"><div class="kv">8</div><div class="kl">课程总数</div><div class="kd">从排局基础到终身局分析</div></div><div class="kpi blue"><div class="kv">3</div><div class="kl">AI角色</div><div class="kd">辩论员→出题官→分析搭档</div></div><div class="kpi blue"><div class="kv">13</div><div class="kl">十三步法</div><div class="kd">终身局分析标准流程</div></div><div class="kpi blue"><div class="kv">81</div><div class="kl">主客关系</div><div class="kd">十干克应组合数</div></div><div class="kpi blue"><div class="kv">14</div><div class="kl">应期方法</div><div class="kd">成功类8种+失败类6种</div></div><div class="kpi blue"><div class="kv">90</div><div class="kl">大运覆盖</div><div class="kd">六步大运覆盖90年</div></div></div><div class="sum-box">8课完整技能链：排局→取用神→格局判断→定应期→终身局分析</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">课堂测验</span><h2>第8课随堂测验——终身局与四柱合参</h2><div class='quiz-q'><p><b>Q1. 奇门终身局以什么时间起局？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,1)'>A. 求测时间</div><div class='quiz-opt' onclick='reveal(this,0,1,1)'>B. 出生年月日时</div><div class='quiz-opt' onclick='reveal(this,0,2,1)'>C. 当前年月日时</div><div class='quiz-opt' onclick='reveal(this,0,3,1)'>D. 任意时间</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 终身局以出生年月日时起局，反映一生总趋势。问时局以求测时起局，反映近期细节。</div></div><div class='quiz-q'><p><b>Q2. 地支子藏何天干（张志春纠正后）？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,1)'>A. 癸水</div><div class='quiz-opt' onclick='reveal(this,1,1,1)'>B. 壬水</div><div class='quiz-opt' onclick='reveal(this,1,2,1)'>C. 子水</div><div class='quiz-opt' onclick='reveal(this,1,3,1)'>D. 甲木</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 张志春纠正：子为阳支藏阳干壬水（非癸水）。阳支藏阳干阴支藏阴干。</div></div><div class='quiz-q'><p><b>Q3. 日干旺相临吉门吉星吉神无冲克属于哪个命运层次？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 基本合局</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 完全合局</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 半合局</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 失局有气</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 完全合局：日干旺相+吉门吉星吉神+无冲克刑害=大富大贵之命。</div></div><div class='quiz-q'><p><b>Q4. 排大运一宫代表几年？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,2)'>A. 10年</div><div class='quiz-opt' onclick='reveal(this,3,1,2)'>B. 12年</div><div class='quiz-opt' onclick='reveal(this,3,2,2)'>C. 15年</div><div class='quiz-opt' onclick='reveal(this,3,3,2)'>D. 20年</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 一宫代表15年，六步大运（1-15/16-30/31-45/46-60/61-75/76-90）覆盖90年。</div></div><div class='quiz-q'><p><b>Q5. 十三步法中断财运看什么？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,1)'>A. 开门与日干关系</div><div class='quiz-opt' onclick='reveal(this,4,1,1)'>B. 生门与日干关系</div><div class='quiz-opt' onclick='reveal(this,4,2,1)'>C. 休门与日干关系</div><div class='quiz-opt' onclick='reveal(this,4,3,1)'>D. 天芮星与日干关系</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 断财运以生门为财，看生门与日干关系。开门为官，休门为家庭，天芮为疾病。</div></div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">结业作业</span><h2>结业作业——手动排终身局并完成分析报告</h2><p>结业作业是本课程的最终交付，要求学员综合运用8课所学全部技能，完成一个完整的奇门终身局分析。这一作业将检验学员对排局、取用神、格局判断、定应期、终身局分析等全部技能的掌握程度。</p><p>作业要求：第一，选择一个出生年月日时（自己的或名人的），手动排奇门终身局，记录完整起局过程。第二，按十三步法完成占断分析，每步给出分析过程和结论。第三，排六步大运，分析每步大运吉凶。第四，给出综合命运评估和人生建议。第五，用AI分析搭档验证分析结果，对比人机差异。</p><p>提交格式：Markdown文件，包含起局过程、十三步分析、大运排法、综合评估、AI验证对比五个部分。文件名格式：结业作业-姓名-终身局分析报告.md。下次课前提交。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">选择自己或名人的出生年月日时，手动排奇门终身局，记录完整起局过程</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">按十三步法完成占断分析，每步给出分析过程和结论</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">排六步大运分析每步吉凶，给出综合命运评估和人生建议</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">用AI分析搭档验证分析结果，对比人机差异并记录</div></div></div><p class="hl">结业交付：手动排终身局+十三步法分析+排大运+综合评估+AI验证</p></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">结业总结</span><h2>8课结业总结——从排局到终身局的完整技能链</h2><ul class="steps-list"><li>第1-2课排局基础：九宫八卦、天地盘排布、节气定局</li><li>第3-4课取用神：用神选取、八门九星八神含义</li><li>第5课格局入门：吉凶格局基本概念与判断</li><li>第6课格局精讲：十干克应81种主客关系、九遁吉格、凶格体系、格局判断四步流程</li><li>第7课定应期：成功类8种、失败类6种、庚格法3种、急缓原则、动静主客九原则</li><li>第8课终身局：四柱合参、十三步法、排大运、历史实例验证、结业交付</li><li>完整技能链：排局→取用神→格局判断→定应期→终身局分析</li><li>AI协作：辩论员→出题官→分析搭档，三角色贯穿后三课</li></ul><div class="sum-box">8课构建完整技能链：排局→取用神→格局判断→定应期→终身局分析</div><div class="sum-box"><b>🔗 下节预告：</b>结业寄语：奇门遁甲学习是终身修行，8课只是入门，精进在于持续实践和验证</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>终身局分析报告（结业交付）——恭喜完成奇门遁甲AI+融合版全部8课！</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位学员好，欢迎来到第8课，也是我们8课系列的结业课。今天我们将前7课的所有技能——排局、取用神、格局判断、定应期——汇聚到一个终极问题：能否用奇门遁甲预测一个人的一生？答案是肯定的，这就是奇门终身局分析。本课将系统讲解奇门与四柱合参的理论、终身局分析十三步法、排大运方法，并通过毛泽东、林彪等历史人物实例验证。本课的AI角色是\"分析搭档\"，它将辅助大家完成复杂的终身局分析。结业作业要求手动排一个奇门终身局并完成占断分析报告。这是8课学习的最终交付，让我们开始。\n\n---"}, {"idx": 1, "title": "本课导览", "text": "先看本课导览。本课有四个核心目标：第一，理解奇门与四柱结合的理论基础；第二，掌握终身局分析十三步法；第三，掌握排大运方法；第四，完成结业交付——终身局分析报告。AI分析搭档角色的核心价值在于辅助完成复杂的终身局分析。十三步法涉及大量信息处理和综合判断，AI可以辅助梳理分析脉络、验证判断逻辑、补充遗漏维度。但AI是\"搭档\"而非\"替代\"——大家必须先自己分析，再用AI验证和补充，确保分析的独立性和准确性。语料来源是QMS§1-10终身局与四柱合参全部章节。结业作业是手动排一个奇门终身局并完成十三步法占断分析报告。这节课信息量很大，请大家集中注意力。\n\n---"}, {"idx": 2, "title": "奇门与四柱结合理论", "text": "我们先理解奇门与四柱结合的理论基础。四柱命理与奇门遁甲各有优势和局限。四柱优势在于入门容易提高难，符号少模型简单，能从宏观把握阴阳平衡、五行流通、天命格局、日主强弱。四柱局限在于符号少导致信息粒度粗，难以精细到具体事件和方位。奇门优势在于模型复杂完整，预测符号多（天地盘干、八门、九星、八神、九宫），更直观具体，能精细到方位、时间、人物关系。奇门局限在于起局复杂，学习曲线陡峭。结合方法是：先列四柱从宏观把握，再看奇门终身局从微观把握。四柱定\"命\"的大框架，奇门定\"运\"的具体轨迹。两者合参，既见森林又见树木，是命运预测的最佳方法组合。\n\n---"}, {"idx": 3, "title": "四柱与奇门优势对比", "text": "这张对比表清晰展示四柱和奇门各自的优势和局限。入门难度：四柱入门容易提高难，奇门入门难提高也难。符号数量：四柱少（干支十神），奇门多（干门星神宫）。信息粒度：四柱粗（宏观格局），奇门细（微观事件）。模型复杂度：四柱简单，奇门复杂完整。方位判断：四柱弱，奇门强（九宫方位）。应期判断：四柱中，奇门强（多种应期法）。学习曲线：四柱先易后难，奇门持续陡峭。合参角色：四柱定命大框架，奇门定运具体轨迹。理解这一对比是掌握合参方法的基础——只有知道各自的强弱，才能取长补短、合理配合。核心原则：四柱宏观加奇门微观等于完整命运预测，取长补短合参最佳。\n\n---"}, {"idx": 4, "title": "终身局与问时局合参", "text": "现在讲解终身局与问时局的区别与合参。终身局是以出生年月日时起局，反映人一生的总趋势。终身局是\"命\"的盘面，展示天赋、格局、大运走向，一经排定一生不变。问时局是以求测时的年月日时起局，反映近期事件的细节。问时局是\"运\"的盘面，展示当前运势、近期吉凶，随求测时间变化。合参原则：终身局定大趋势，问时局定小细节。比如终身局显示财运总体吉利，问时局显示近期有破财之象，则判断为总体财运好但近期需谨慎。出生时间不准时可直接以问时局断终身——求测时刻的时空信息中蕴含了求测人的命运信息，可作终身分析的替代。这一方法在实践中经常使用。\n\n---"}, {"idx": 5, "title": "地支藏干阴阳属性纠正", "text": "这一页非常重要——地支藏干阴阳属性纠正。这是张志春先生纠正的千年错误，影响深远。地支藏干的阴阳属性应与地支本身的阴阳属性一致——阳支藏阳干、阴支藏阴干。四项纠正：子藏壬水（非癸），子为阳支所藏应为阳干壬水。亥藏癸水（非壬），亥为阴支所藏应为阴干癸水。午藏丙火（非丁），午为阳支所藏应为阳干丙火。巳藏丁火（非丙），巳为阴支所藏应为阴干丁火。纠正原理：阳支藏阳干、阴支藏阴干，阴阳属性一致。传统说法中子藏癸、亥藏壬等阴阳属性颠倒，是千年传抄错误。这一纠正影响四柱分析中的通根、藏干透出等判断，进而影响日主强弱和用神取法的准确性。大家一定要牢记这个纠正。\n\n---"}, {"idx": 6, "title": "十格大纲", "text": "十格大纲是四柱命理的核心格局分类，分五吉格和五凶格。五吉格（顺用）：财格、官格、印格、食格。吉神顺用——生扶护卫，使吉神力量发挥。比如财格喜食伤生财、官印护官，让吉神力量充分释放。五凶格（逆用）：杀格、伤格、枭格、刃格。凶神逆用——克制约化，使凶神力量受控。比如杀格喜食制杀、印化杀，让凶神力量受到制约而不为害。取用神原则：专求月令。月令为月支所藏之神，是格局的源头。先看月令藏何神，定格局名称，再定用神喜忌。吉神顺用，凶神逆用。这一原则是四柱取用神的根本大法。顺用与逆用的本质区别：顺用让吉神力量发挥，逆用让凶神力量受控。顺用主富贵安稳，逆用主险中求胜。\n\n---"}, {"idx": 7, "title": "奇门终身局分析十三步法", "text": "十三步法是奇门终身局分析的标准操作程序，覆盖命运的所有维度。第1步首辨男女阴阳遁：男命阳遁顺排阴遁逆排，女命相反。第2步看值符值使：值符为大局主导之神，值使为执行之门。第3步看奇门大局：伏吟反吟空亡等全局格局。第4步竖看日干落宫：日干为求测人，看落何宫临何门星神及旺衰——定命运层次。第5步适宜职业：以九星八门定方向。第6步发展方位：以三吉门定方位。第7步断财运：生门与日干关系。第8步断官运：开门与日干关系。第9步家庭婚姻：休门与日干关系。第10步教育：天辅星与日干关系。第11步健康：天芮星与日干关系。第12步六亲：年月时干与日干关系。第13步寿限：值使门与日干关系。十三步合参即为完整的终身局分析。\n\n---"}, {"idx": 8, "title": "日干落宫五层次", "text": "日干落宫的合局程度分五个层次，决定人的命运等级。这是十三步法第4步的核心内容。第一层完全合局：日干旺相、临吉门吉星吉神、无冲克刑害——大富大贵之命，最为罕见。第二层基本合局：日干旺相、临吉门但星神有瑕疵——富贵之命，略有波折。第三层半合局：日干中和、吉凶参半——中层之命，普通富贵。第四层失局有气：日干衰但有气通根有源、临凶门但有救应——下等之命，辛苦但有转机。第五层完全失局：日干死绝、临凶门凶星凶神、无救应——底层之命，多灾多难。这五个层次是命运等级判定的核心标准，大家在结业作业中必须准确判断日干落宫属于哪个层次。\n\n---"}, {"idx": 9, "title": "排大运", "text": "奇门终身局排大运的方法与四柱不同，基于九宫的空间布局。一宫代表15年：九宫中每宫代表15年人生运势。六步大运：1-15岁、16-30岁、31-45岁、46-60岁、61-75岁、76-90岁，共六步覆盖90年。排法：从出生年地支所在宫起，顺时针排大运。如出生年地支为子，子在一宫，则1-15岁在一宫、16-30岁在顺时针下一宫，依此类推排满六步。大运吉凶判断：每步大运看所落宫的八门、九星、八神判断该15年的运势吉凶。吉门吉星吉神主该运吉，凶门凶星凶神主该运凶。同时结合日干与大运宫位的关系判断大运对日干的影响。排大运是十三步法中第13步寿限判断的重要依据——若某步大运临死门凶星且克日干，可能主该运有大灾或寿终。\n\n---"}, {"idx": 10, "title": "实例分析——毛泽东终身局", "text": "现在看历史人物实例。毛泽东的四柱为癸巳年、甲子月、丁酉日、甲辰时。奇门终身局起局后，天禽星为值符、生门为值使，为大吉之局。天禽星值符主中正之德，象征以中正之道统领全局。天禽星居中宫临制八方，与毛泽东\"以中央统御天下\"的历史地位高度吻合。生门值使主财利民生，象征执行层面以经济民生为重。日干丁火旺相，得月令甲木生扶，临吉门吉星，属于完全合局层次——大富大贵之命。大运顺排，早年中年皆行吉运，主一生运势顺遂。这个案例完美验证了奇门终身局分析的准确性——天禽星居中临制八方加生门值使主民生，等于大富大贵以中央统御天下，与历史事实完全吻合。\n\n---"}, {"idx": 11, "title": "实例分析——林彪终身局", "text": "再看林彪的实例。林彪的四柱为丁未年、辛亥月、庚寅日、己卯时。奇门终身局起局后，天蓬星照命、九星伏吟、晚年伤门凶终。天蓬星为大凶之星，照命主一生多险多灾。但天蓬星亦主兵戈争战，故早年从军有战功。九星伏吟主全局闭塞停滞，象征人生格局受限、难以突破天花板。晚年行伤门运，伤门主伤灾刑伤，值使门临伤门主寿限有碍。终身局显示先吉后凶、晚年凶终之命，与林彪实际历史结局高度吻合——早年战功赫赫，晚年折戟沉沙。这个案例展示了奇门终身局对人生轨迹动态变化的预测能力——不仅判断总体吉凶，还能区分早年晚年不同阶段的运势变化。\n\n---"}, {"idx": 12, "title": "实例分析——韦千里终身局", "text": "韦千里的四柱为辛亥年、辛卯月、庚子日、庚辰时。韦千里为近代命理大家，著有《千里命稿》等经典著作。其命局展示\"命理学者\"的命格特征。分析要点：印星旺相主学术研究，食伤泄秀主才华横溢。日干庚金虽不得月令，但有辰土生扶，属于失局有气层次——辛苦但有转机之命。韦千里一生致力于命理研究，虽非大富大贵，但在学术领域成就斐然，正是\"失局有气\"的典型表现。教学意义：这个案例展示奇门终身局不仅能断富贵吉凶，还能断职业适宜性和人生方向。印星旺相主学术、食伤泄秀主才华，这些特征指向\"命理学者\"的职业方向。此例也说明命运层次不等于人生价值——失局有气之命虽非大富大贵，但在适合的领域同样可以成就卓越。\n\n---"}, {"idx": 13, "title": "AI终身局分析搭档提示词", "text": "现在进入AI融入环节。这是AI终身局分析搭档的提示词。使用方法是：大家提供奇门终身局信息（出生年月日时、起局结果），AI将按十三步法辅助分析，每步给出分析过程和结论，最后给出综合命运评估和人生建议。使用时必须注意：AI是\"搭档\"而非\"替代\"。大家必须先自己按十三步法分析，再用AI验证和补充。如果自己的分析和AI的结论有差异，需要仔细分析差异原因——是自己的判断有误，还是AI的分析有偏差，还是局象信息有特殊之处。这种\"先分析后验证\"的人机协作模式，既能保证分析的独立性，又能借助AI提高效率和准确性。结业作业中要求包含AI验证对比部分。\n\n---"}, {"idx": 14, "title": "AI四柱奇门合参器提示词", "text": "第二个AI提示词是四柱奇门合参器。大家提供四柱信息，AI先做四柱宏观分析（阴阳平衡、五行流通、天命格局、日主强弱），再根据四柱推断适宜的奇门终身局特征，给出需要重点关注的命运维度和奇门分析重点步骤。这个工具的使用逻辑是：先用四柱定大框架，再用奇门定具体轨迹。比如四柱显示日主弱喜印扶，则奇门终身局分析中需重点关注印星（天辅星）与日干的关系，判断学业和贵人运。四柱显示财旺身弱，则奇门需重点关注生门与日干关系，判断财运能否真正得到。这种\"四柱指引方向、奇门细化分析\"的合参方法，是终身局分析的最佳实践。\n\n---"}, {"idx": 15, "title": "结业金句", "text": "这条结业金句浓缩了奇门终身局分析的核心方法论：\"四柱定命之大框架，奇门定运之具体轨迹，两者合参既见森林又见树木。\"仅有四柱则知其然不知其所以然——知富贵而不知何时何方。仅有奇门则见树木不见森林——知细节而不知全局格局。合参才能既把握全局又洞察细节，做出最准确的命运预测和人生指导。这句话也是整个8课课程的方法论总结——我们从排局基础开始，逐步构建了取用神、格局判断、定应期的技能链，最终汇聚到终身局分析。每一步都是不可或缺的环节，每一步的产出都是下一步的输入。8课构成一个完整的技能闭环，而终身局分析是这个闭环的终极应用。\n\n---"}, {"idx": 16, "title": "8课技能链统计", "text": "回顾8课构建的完整技能链。8课从排局基础到终身局分析，3个AI角色（辩论员、出题官、分析搭档）贯穿后三课，13步法是终身局分析标准流程，81种主客关系是十干克应组合数，14种应期方法（成功类8种加失败类6种），六步大运覆盖90年。完整技能链是：排局到取用神到格局判断到定应期到终身局分析。每一课的产出都是下一课的输入：第1-2课排局基础产出排局能力，第3-4课取用神产出用神选取能力，第5课格局入门，第6课格局精讲产出格局判断能力，第7课定应期产出应期推演能力，第8课终身局分析产出终身局分析报告。这条技能链是奇门遁甲从入门到应用的最短路径。\n\n---"}, {"idx": 17, "title": "课堂测验", "text": "现在进行随堂测验。第一题：奇门终身局以什么时间起局？答案是出生年月日时。终身局以出生年月日时起局反映一生总趋势，问时局以求测时起局反映近期细节。第二题：地支子藏何天干（张志春纠正后）？答案是壬水。子为阳支藏阳干壬水，非癸水。第三题：日干旺相临吉门吉星吉神无冲克属于哪个命运层次？安全答案是完全合局，大富大贵之命。第四题：排大运一宫代表几年？答案是15年。一宫代表15年，六步大运覆盖90年。第五题：十三步法中断财运看什么？答案是生门与日干关系。生门为财，开门为官，休门为家庭，天芮为疾病。大家答对了几题？\n\n---"}, {"idx": 18, "title": "结业作业", "text": "现在布置结业作业——这是本课程的最终交付。作业要求：第一，选择一个出生年月日时（自己的或名人的），手动排奇门终身局，记录完整起局过程。第二，按十三步法完成占断分析，每步给出分析过程和结论。第三，排六步大运，分析每步大运吉凶。第四，给出综合命运评估和人生建议。第五，用AI分析搭档验证分析结果，对比人机差异。提交格式：Markdown文件，包含起局过程、十三步分析、大运排法、综合评估、AI验证对比五个部分。文件名格式：结业作业-姓名-终身局分析报告.md。下次课前提交。这个作业将检验大家对8课全部技能的掌握程度，是结业的核心交付物。请大家认真完成。\n\n---"}, {"idx": 19, "title": "结业总结", "text": "最后做8课结业总结。8课构建了完整的技能链：第1-2课排局基础，第3-4课取用神，第5课格局入门，第6课格局精讲（十干克应81种主客关系、九遁吉格、凶格体系、格局判断四步流程），第7课定应期（成功类8种、失败类6种、庚格法3种、急缓原则、动静主客九原则），第8课终身局（四柱合参、十三步法、排大运、历史实例验证、结业交付）。完整技能链是：排局到取用神到格局判断到定应期到终身局分析。AI协作三角色：辩论员到出题官到分析搭档，贯穿后三课。结业寄语：奇门遁甲的学习是终身修行，8课只是入门，真正的精进在于持续实践和验证。恭喜大家完成奇门遁甲AI+融合版全部8课！课后请认真完成结业作业，提交终身局分析报告。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
