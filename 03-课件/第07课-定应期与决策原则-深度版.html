@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QMDJ-L7</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#E1EEFD,#C5DDF8);min-height:100vh;overflow:hidden}
+.deck{position:relative;width:100vw;height:100vh;overflow:hidden}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:32px 72px 84px;opacity:0}
+.slide.active{display:flex;animation:fadeUp .45s ease forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.card{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:22px;padding:30px 38px;max-width:900px;width:100%;box-shadow:0 8px 32px rgba(30,80,160,.12),0 1px 0 rgba(255,255,255,.9) inset;max-height:calc(100vh - 120px);overflow-y:auto;position:relative}
+.card::before{content:"";position:absolute;left:0;top:26px;bottom:26px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#3B82F6,#93C5FD);opacity:.55}
+h1{font-size:34px;color:#1a2c5e;letter-spacing:-1px}
+h2{font-size:27px;color:#1a2c5e;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #dbe7f8}
+p,li{font-size:15.5px;color:#2d3a55;line-height:1.82;margin:0 0 13px 0}
+p+p{margin-top:7px}
+p:last-child{margin-bottom:0}
+/* 厚版阅读锚：多段正文每段前浅色圆点，打破文字墙 */
+p.para-anchored{position:relative;padding-left:20px}
+p.para-anchored::before{content:"";position:absolute;left:2px;top:10px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,#93C5FD,#3B82F6);opacity:.75}
+p b.lead{display:block;font-size:16.5px;color:#16306e;font-weight:700;margin-bottom:6px;line-height:1.5}
+p b.lead::after{content:"";display:block;width:34px;height:3px;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:2px;margin-top:7px}
+ul{margin:8px 0 8px 22px}
+.tag{display:inline-block;background:#3B82F6;color:#fff;font-size:13px;border-radius:6px;padding:3px 12px;margin:0 6px 10px 0;font-weight:600}
+.big-icon{font-size:60px;margin-bottom:12px}
+.info-row{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:#5b6b82;margin-top:14px}
+.steps-list{margin:8px 0 8px 24px}
+.steps-list li{margin:6px 0}
+.steps-list li b{color:#3B82F6}
+.sum-box{background:rgba(207,10,44,.06);border-left:4px solid #CF0A2C;border-radius:0 12px 12px 0;padding:13px 16px;margin-top:12px;font-size:16px;color:#5a2333}
+.prompt-box{background:#0e2347;color:#dbe6f5;border-radius:14px;padding:18px 22px;font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.75;position:relative;margin-top:12px;white-space:pre-wrap}
+.copy-btn{position:absolute;top:10px;right:12px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+.copy-btn:hover{background:#2E68B8}
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+table.dt{border-collapse:collapse;width:100%;font-size:15px}
+table.dt th{background:#e8f0fe;color:#1a2c5e;padding:9px 12px;text-align:left}
+table.dt td{padding:9px 12px;border-bottom:1px solid #dfe8f5}
+.art-box{flex:0 0 320px;max-width:42%;align-self:center}
+#teleprompter{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);width:min(720px,92vw);max-height:38vh;overflow-y:auto;background:rgba(255,255,255,.97);border:2px solid #93C5FD;border-radius:14px;padding:14px 18px;z-index:200;box-shadow:0 10px 36px rgba(30,80,160,.22);display:none}
+#teleprompter .tp-head{display:flex;align-items:center;gap:10px;font-size:13px;color:#2E68B8;border-bottom:1px solid #dbe7f8;padding-bottom:8px;margin-bottom:8px;flex-wrap:wrap}
+#teleprompter .tp-title{font-weight:650;color:#1a2c5e}
+#teleprompter .tp-text{font-size:15px;line-height:1.85;color:#2d3a55}
+#teleprompter button{background:#e8f0fe;color:#2E68B8;border:1px solid #b9d2f2;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+#teleprompter button:hover{background:#d5e5fc}
+#tpAnnoCanvas{position:fixed;inset:0;z-index:190;display:none;cursor:crosshair}
+#teacherBtn{position:fixed;right:20px;bottom:76px;background:#CF0A2C;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:12px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(207,10,44,.35);line-height:1.2}
+#teacherBtn:hover{background:#b00825}
+#aiBtn{position:fixed;right:20px;bottom:140px;background:#3B82F6;color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer;z-index:150;box-shadow:0 6px 18px rgba(59,130,246,.35)}
+#aiBtn:hover{background:#2E68B8}
+.art-box img{width:100%;object-fit:contain;border-radius:14px;box-shadow:0 6px 20px rgba(30,80,160,.15);background:#fff}
+.quiz-q{margin:12px 0}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.quiz-opt{border:1.5px solid #c9d8ee;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:15.5px;transition:all .2s}
+.quiz-opt:hover{border-color:#3B82F6}
+.quiz-opt.correct{border-color:#059669;background:#ecfdf5}
+.quiz-opt.wrong{border-color:#CF0A2C;background:#fdf1f3}
+.quiz-exp{font-size:14.5px;color:#5b6b82;background:#f0f6ff;border-radius:8px;padding:9px 14px}
+.nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;gap:18px;border-top:1px solid #d5e3f8}
+.nav button{background:#3B82F6;color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:15px;cursor:pointer;font-family:inherit}
+.nav button:disabled{background:#b9c8de;cursor:default}
+.dots{display:flex;gap:5px;flex-wrap:wrap;max-width:60%;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#b9c8de;cursor:pointer}
+.dot.on{background:#CF0A2C;transform:scale(1.25)}
+.pageno{font-size:13px;color:#5b6b82;min-width:56px;text-align:center}
+.side{position:fixed;top:50%;transform:translateY(-50%);background:rgba(59,130,246,.85);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:19px;cursor:pointer;z-index:10}
+.side:hover{background:#3B82F6}
+#prevBtn{left:14px}#nextBtn{right:14px}
+
+/* ── 商务风增强组件 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+.kpi{background:linear-gradient(135deg,#f0f6ff,#fff);border:1.5px solid #bcd4f5;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px rgba(59,130,246,.08)}
+.kpi .kv{font-size:30px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .kv .u{font-size:14px;font-weight:700}
+.kpi .kl{font-size:12px;color:#1a2537;font-weight:700;margin-top:4px}
+.kpi .kd{font-size:10.5px;color:#5a6e8a;margin-top:3px;line-height:1.4}
+.kpi.warn .kv{color:#CF0A2C}.kpi.warn{border-color:#f5b8c2;background:linear-gradient(135deg,#fff5f6,#fff)}
+.kpi.good .kv{color:#059669}.kpi.good{border-color:#a7e3c8;background:linear-gradient(135deg,#f0faf5,#fff)}
+.kpi.amber .kv{color:#b45309}.kpi.amber{border-color:#f3d9a4;background:linear-gradient(135deg,#fffbeb,#fff)}
+.tl-v{position:relative;margin:10px 0;padding-left:30px}
+.tl-v:before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:3px;border-radius:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.tl-item{position:relative;margin-bottom:13px;background:#fff;border:1px solid #dbe6f5;border-radius:11px;padding:9px 14px}
+.tl-item:before{content:"";position:absolute;left:-24px;top:13px;width:11px;height:11px;border-radius:50%;background:#3B82F6;box-shadow:0 0 0 3px #dbeafe}
+.tl-item .tt{font-weight:800;color:#07152f;font-size:13.5px}
+.tl-item .tt .tm{display:inline-block;background:#3B82F6;color:#fff;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 8px;margin-right:8px}
+.tl-item .td{font-size:12px;color:#3a4a63;margin-top:3px;line-height:1.55}
+.grid-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin:12px 0}
+.g-card{background:#fff;border:1px solid #dbe6f5;border-radius:13px;padding:13px 15px;border-top:4px solid #3B82F6}
+.g-card:nth-child(2){border-top-color:#CF0A2C}
+.g-card:nth-child(3){border-top-color:#059669}
+.g-card:nth-child(4){border-top-color:#b45309}
+.g-card:nth-child(5){border-top-color:#7c3aed}
+.g-card:nth-child(6){border-top-color:#0f766e}
+.g-card .gi{font-size:23px}
+.g-card .gh{font-weight:800;color:#07152f;font-size:13.5px;margin-top:4px}
+.g-card .gb{font-size:11.5px;color:#3a4a63;margin-top:4px;line-height:1.55}
+.quote-big{text-align:center;padding:22px 26px;margin:12px 0;background:linear-gradient(135deg,#07152f,#12325e);border-radius:15px;color:#fff}
+.quote-big .qi{font-size:26px}
+.quote-big .qt{font-size:17px;font-weight:800;line-height:1.7;margin-top:6px}
+.quote-big .qs{font-size:11.5px;color:#93b8e8;margin-top:8px}
+.icon-list li{list-style:none;position:relative;padding-left:30px;margin:7px 0}
+.icon-list li:before{position:absolute;left:2px;top:1px;font-size:15px}
+ul.data-list{list-style:none;margin:8px 0;padding:0}
+ul.data-list li{position:relative;padding:6px 0 6px 16px;margin:0;border-bottom:1px dashed #d5e2f3}
+ul.data-list li:last-child{border-bottom:none}
+ul.data-list li:before{content:"▸";position:absolute;left:0;color:#3B82F6;font-weight:800}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.badge{font-size:11px;font-weight:800;padding:3px 12px;border-radius:12px;background:#e8effc;color:#1d4ed8;border:1px solid #bcd4f5}
+.badge.r{background:#fdeaea;color:#CF0A2C;border-color:#f5b8c2}
+.badge.g{background:#e7f6ef;color:#059669;border-color:#a7e3c8}
+.badge.a{background:#fffbeb;color:#b45309;border-color:#f3d9a4}
+.callout{display:flex;gap:12px;background:#fffbeb;border:1.5px solid #f3d9a4;border-left:5px solid #d97706;border-radius:12px;padding:13px 16px;margin:14px 0 6px;align-items:flex-start}
+.callout .ci{font-size:21px;flex:none}
+.callout .cb{font-size:12.3px;color:#78350f;line-height:1.6}
+.callout .cb b{color:#92400e}
+.callout.info{background:#eff6ff;border-color:#93C5FD}.callout.info .cb{color:#1e3a5f}.callout.info .cb b{color:#1d4ed8}
+
+.code-block{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:12px 0;font-family:Menlo,monospace;font-size:14px;line-height:1.6;position:relative}
+.code-lang{position:absolute;top:8px;right:12px;font-size:11px;color:#7dd3fc;background:rgba(125,211,252,.15);padding:2px 8px;border-radius:6px}
+.code-block pre{margin:0;white-space:pre-wrap}
+.flow-v{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.flow-node{display:flex;gap:12px;align-items:flex-start;position:relative;padding:0 0 14px 0}
+.flow-node:before{content:"";position:absolute;left:13px;top:26px;bottom:0;width:2px;background:linear-gradient(#3B82F6,#93C5FD)}
+.flow-node:last-child:before{display:none}
+.fn-dot{width:28px;height:28px;border-radius:50%;background:#EFF6FF;border:2px solid #3B82F6;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.fn-txt{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:6px 12px;flex:1;font-size:14.5px}
+.case-card{background:linear-gradient(135deg,#fff,#F0F9FF);border:1.5px solid #BAE6FD;border-radius:14px;padding:16px 18px;margin:12px 0}
+.case-head{font-weight:700;color:#0369A1;margin-bottom:8px;font-size:15.5px}
+.case-metrics{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.cm{background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:8px 14px;text-align:center;flex:1;min-width:100px}
+.cm-v{font-size:20px;font-weight:800;color:#0369A1}
+.cm-l{font-size:12px;color:#5b6b82}
+.disc-wall{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.disc-q{display:flex;gap:10px;background:#fff;border:1.5px solid #DBEAFE;border-radius:10px;padding:10px 12px;align-items:flex-start}
+.dq-mark{width:24px;height:24px;border-radius:50%;background:#0369A1;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dq-txt{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<div class="slide" data-index="0">
+  <div class="card" style="text-align:center">
+    <div class="big-icon">⏰</div>
+    <span class="tag">第7课·50min</span>
+    <h1 style="margin-top:12px;font-size:32px">定应期与决策原则</h1>
+    <p style="color:#5b6b82;font-size:16px;margin-top:10px">主客动静断应验——吉凶何时应验</p>
+    <div class="info-row" style="justify-content:center"><span>⏱️ 50分钟</span><span>🎯 产出：应期推演能力 → 第8课输入：终身局分析的应期方法</span></div>
+  </div>
+</div>
+
+<div class="slide" data-index="1">
+  <div class="card"><span class="tag">本课导览</span><h2>AI角色：出题官——生成应期判断练习题</h2><p><b class="lead">本课解决奇门占断的第二个核心问题——“何时”。</b>上节课我们学会了判断吉凶格局，但吉凶何时应验？是应年、应月、应日还是应时？这就是应期判断。本课将系统讲解成功类应期8种方法和失败类应期6种方法，以及最重要的庚格法定应期。</p><p><b class="lead">AI出题官角色的核心价值在于提供大量练习机会。</b>应期判断是奇门占断中最需要实战练习的技能——仅靠理论理解远远不够，必须通过大量案例练习才能熟练掌握。出题官角色让AI根据学员需求自动生成不同类型、不同难度的应期判断练习题，附标准答案和详细解析，实现“千人千面”的个性化训练。</p><div class="grid-cards"><div class="g-card"><div class="gi">🎯</div><div class="gh">核心目标</div><div class="gb">掌握成功类应期8种、失败类应期6种、庚格法3种，熟练推定应验时间</div></div><div class="g-card"><div class="gi">🤖</div><div class="gh">AI角色</div><div class="gb">出题官：生成应期判断练习题，通过大量练习巩固应期推演能力</div></div><div class="g-card"><div class="gi">📚</div><div class="gh">语料来源</div><div class="gb">QM§12主客动静决策、QM§15定应期方法</div></div><div class="g-card"><div class="gi">🔗</div><div class="gh">课程衔接</div><div class="gb">本课产出应期推演能力，为第8课终身局分析提供应期方法</div></div></div><div class="sum-box">格局断吉凶，应期断何时——先定吉凶再定应期</div></div>
+</div>
+
+<div class="slide" data-index="2">
+  <div class="card"><span class="tag">QM§15</span><h2>应期概念导入——从吉凶到何时</h2><p class="para-anchored"><b class="lead">应期是奇门遁甲占断中“定时间”的核心环节。</b>格局判断解决“吉凶”问题，应期判断解决“何时”问题。一局断出吉凶后，必须推定吉凶应验的具体时间——是应年、应月、应日还是应时？是近期还是远期？这就是应期判断。</p><p class="para-anchored"><b class="lead">应期判断分两大类：</b>成功类应期和失败类应期。成功类应期推定吉事何时应验，以用神为核心从8个维度推定。失败类应期推定凶事何时应验，以凶神凶格为核心从6个维度推定。两类应期的推定方法截然不同——这是本课最重要的区分点，学员常犯的错误就是混淆两类应期方法。</p><p class="para-anchored"><b class="lead">应期判断的基本流程：</b>第一步先定吉凶（用上节课的格局判断四步法），第二步定应期类型（吉事用成功类法，凶事用失败类法），第三步选择具体的应期推定方法，第四步结合用神旺衰判断应期远近——旺则速应，衰则缓应。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">吉事用成功类应期法（以用神为核心），凶事用失败类应期法（以凶神为核心），不可混用。</div></div><div class="sum-box">应期判断分成功类8种和失败类6种，两类方法截然不同</div></div>
+</div>
+
+<div class="slide" data-index="3">
+  <div class="card"><span class="tag">QM§15</span><h2>成功类应期（一）——天干、地支、八门、九星定应期</h2><p class="para-anchored"><b class="lead">成功类应期以用神为核心，从8个维度推定吉事应验时间。</b>前四种方法以用神所临的盘面元素为依据：</p><p class="para-anchored"><b class="lead">第一种以用神所临天干定应期：</b>用神所临天干为应期之干。如用神临丙，则应丙日或丙月。这是最直接的应期推定法，用神临何干即应何干之时。</p><p class="para-anchored"><b class="lead">第二种以用神所落地支定应期：</b>用神所落地支为应期之支。如用神落午，则应午日或午月。与天干法配合使用，天干定干、地支定支，合为具体的干支时间。</p><p class="para-anchored"><b class="lead">第三种以用神所临八门定应期：</b>用神所临八门的五行属性和本宫地支定应期。如临开门（乾金），应戌亥之日。八门法适用于以行动方位为主的占断。</p><p class="para-anchored"><b class="lead">第四种以用神所临九星定应期：</b>用神所临九星的五行属性和本宫地支定应期。如临天心星（乾金），应戌亥之日。九星法适用于以天时为主的占断。</p><div class="sum-box">前四种成功类应期以用神所临的天干、地支、八门、九星为依据</div></div>
+</div>
+
+<div class="slide" data-index="4">
+  <div class="card"><span class="tag">QM§15</span><h2>成功类应期（二）——八神、日干、太岁、马星定应期</h2><p class="para-anchored"><b class="lead">后四种成功类应期方法以用神的关系维度为依据：</b></p><p class="para-anchored"><b class="lead">第五种以用神所临八神定应期：</b>用神所临八神的五行属性定应期。如临值符（土神），应辰戌丑未之日。八神法适用于以神煞为主的占断。</p><p class="para-anchored"><b class="lead">第六种以用神与日干关系定应期：</b>用神与日干的生克关系定应期远近。用神生日干应期近（用神主动来生，事速成），日干生用神应期远（日干被动去生，事缓成）。此法定应期远近而非具体时间。</p><p class="para-anchored"><b class="lead">第七种以用神与太岁关系定应期：</b>用神与太岁（年支）的关系定年度应期。用神与太岁相合应本年，相冲应次年。此法适用于跨年度的长期事件应期判断。</p><p class="para-anchored"><b class="lead">第八种以用神所临马星定应期：</b>用神所临驿马星定应期。马星主变动速至，应期较快。驿马星为申子辰马在寅、亥卯未马在巳、寅午戌马在申、巳酉丑马在亥。马星法适用于以变动、出行为主的占断。</p><div class="sum-box">后四种成功类应期以用神与八神、日干、太岁、马星的关系为依据</div></div>
+</div>
+
+<div class="slide" data-index="5">
+  <div class="card"><span class="tag">QM§15</span><h2>成功类应期8种方法汇总</h2><p><b class="lead">以下汇总成功类应期的8种方法，便于学员建立全局认知。</b>实际占断中不必8种全用，通常选择2-3种最合适的方法交叉验证。选择原则：以用神所临元素为主、关系维度为辅。若多种方法推定的应期一致，则应期判断更为可靠。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">天干定应期</div><div class="gb">用神临何干应何干之时，如临丙应丙日</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">地支定应期</div><div class="gb">用神落何支应何支之时，如落午应午日</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">八门定应期</div><div class="gb">用神临何门取门本宫支，如开门应戌亥</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">九星定应期</div><div class="gb">用神临何星取星本宫支，如天心应戌亥</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">八神定应期</div><div class="gb">用神临何神取神五行，如值符应辰戌丑未</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">日干关系定远近</div><div class="gb">用神生日干应近，日干生用神应远</div></div><div class="g-card"><div class="gi">7️⃣</div><div class="gh">太岁关系定年度</div><div class="gb">与太岁合应本年，冲应次年</div></div><div class="g-card"><div class="gi">8️⃣</div><div class="gh">马星定应期</div><div class="gb">用神临马星主速至，应期较快</div></div></div><div class="sum-box">8种方法交叉验证，多种方法一致则应期判断更可靠</div></div>
+</div>
+
+<div class="slide" data-index="6">
+  <div class="card"><span class="tag">QM§15</span><h2>失败类应期（一）——庚格、凶门、凶星定应期</h2><p class="para-anchored"><b class="lead">失败类应期以凶神凶格为核心，从6个维度推定凶事应验时间。</b>前三种方法以凶神凶格的落宫为依据：</p><p class="para-anchored"><b class="lead">第一种以庚格定应期：</b>庚为阻碍失败之神。庚临年干应年、庚临月干应月、庚临日干应日。庚格法是失败类应期最常用的方法，因庚金主肃杀阻碍，庚加临何干即凶事应于该干所代表的时间层级。</p><p class="para-anchored"><b class="lead">第二种以凶门定应期：</b>死门、惊门、伤门落宫地支定应期。如死门落坎一宫，坎主子，应子日。凶门主凶事之门，其落宫地支即凶事应验之期。</p><p class="para-anchored"><b class="lead">第三种以凶星定应期：</b>天蓬星（大凶）、天芮星（病神）落宫地支定应期。如天芮落坤二宫，坤主未申，应未申之日。凶星主凶事之星，其落宫地支即凶事应验之期。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">庚格法是失败类应期最常用最重要的方法——庚临何干即应何干之时。</div></div><div class="sum-box">前三种失败类应期以庚格、凶门、凶星的落宫为依据</div></div>
+</div>
+
+<div class="slide" data-index="7">
+  <div class="card"><span class="tag">QM§15</span><h2>失败类应期（二）——凶神、空亡、冲克定应期</h2><p class="para-anchored"><b class="lead">后三种失败类应期方法以凶神和用神的冲克关系为依据：</b></p><p class="para-anchored"><b class="lead">第四种以凶神定应期：</b>白虎（刑伤）、玄武（盗贼）落宫地支定应期。如白虎落震三宫，震主卯，应卯日。凶神主凶事之神煞，其落宫地支即凶事应验之期。</p><p class="para-anchored"><b class="lead">第五种以空亡定应期：</b>旬空之支定应期。空亡主力量虚耗，凶事应于空亡之支对应的时间。如甲子旬空戌亥，凶事应戌亥之日。空亡法的原理是：空亡之地力量虚耗，凶事乘虚而入。</p><p class="para-anchored"><b class="lead">第六种以冲克定应期：</b>冲用神之支定应期。用神被冲克之时为凶事应验之期。如用神落午，子冲午，应子日。冲克法的原理是：用神被冲克则吉力受损，凶事乘冲克之机而应。</p><div class="sum-box">后三种失败类应期以凶神落宫、空亡之支、冲用神之支为依据</div></div>
+</div>
+
+<div class="slide" data-index="8">
+  <div class="card"><span class="tag">QM§15</span><h2>失败类应期6种方法汇总</h2><p><b class="lead">以下汇总失败类应期的6种方法。</b>与成功类应期一样，实际占断中通常选择2-3种最合适的方法交叉验证。庚格法因其重要性单独列出详解。选择原则：优先用庚格法（最常用最可靠），辅以凶门凶星法，空亡冲克法作为补充验证。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">庚格定应期</div><div class="gb">庚临年干应年/月干应月/日干应日</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">凶门定应期</div><div class="gb">死惊伤门落宫地支为应期</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">凶星定应期</div><div class="gb">天蓬天芮落宫地支为应期</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">凶神定应期</div><div class="gb">白虎玄武落宫地支为应期</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">空亡定应期</div><div class="gb">旬空之支对应时间为应期</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">冲克定应期</div><div class="gb">冲用神之支为凶事应验之期</div></div></div><div class="sum-box">庚格法优先，凶门凶星法辅之，空亡冲克法补充验证</div></div>
+</div>
+
+<div class="slide" data-index="9">
+  <div class="card"><span class="tag">QM§15</span><h2>庚格法3种——破获、找寻、阻止</h2><p class="para-anchored"><b class="lead">庚格法是失败类应期中最重要最常用的方法，分三种应用场景：</b></p><p class="para-anchored"><b class="lead">破获类（庚临年干→应年）：</b>占破案、捕获、找寻等事，庚临年干主年内破获，应期在年内。此法适用于跨年度的长期案件破获应期判断。庚临年干影响范围最广，但应期最慢。</p><p class="para-anchored"><b class="lead">找寻类（庚临月干→应月）：</b>占找寻人物，庚临月干主月内找到，应期在月内。此法适用于中期找寻应期判断。庚临月干应期适中，是找寻类占断的常用方法。</p><p class="para-anchored"><b class="lead">阻止类（庚临日干→应日）：</b>占阻止、拦截等事，庚临日干主日内阻止，应期在日内。此法适用于短期阻止应期判断。庚临日干因克应迅速最为常用，是实际占断中最高频使用的庚格法。</p><p class="para-anchored"><b class="lead">庚格法的核心原理：</b>庚为阻碍、肃杀之神，庚加临何干，凶事即应于该干所代表的时间层级。庚临年干应年最慢，庚临日干应日最快。选择哪种庚格法取决于所测之事的时间跨度和庚在局中的加临情况。</p><div class="tbl-wrap"><table class="dt"><tr><th>庚格法</th><th>庚临</th><th>应期</th><th>适用场景</th><th>常用度</th></tr><tr><td>破获类</td><td>年干</td><td>应年</td><td>破案捕获（长期）</td><td>中</td></tr><tr><td>找寻类</td><td>月干</td><td>应月</td><td>找寻人物（中期）</td><td>中</td></tr><tr><td>阻止类</td><td>日干</td><td>应日</td><td>阻止拦截（短期）</td><td>高</td></tr></table></div><div class="sum-box">庚临日干应日因克应迅速最为常用，是实际占断最高频方法</div></div>
+</div>
+
+<div class="slide" data-index="10">
+  <div class="card"><span class="tag">QM§15</span><h2>成功类与失败类应期对比</h2><div class="tbl-wrap"><table class="dt"><tr><th>维度</th><th>成功类应期</th><th>失败类应期</th></tr><tr><td>推定核心</td><td>用神（吉力之源）</td><td>凶神凶格（凶力之源）</td></tr><tr><td>方法数量</td><td>8种</td><td>6种</td></tr><tr><td>主要方法</td><td>天干/地支/八门/九星</td><td>庚格/凶门/凶星/凶神</td></tr><tr><td>远近判断</td><td>用神旺则速应衰则缓应</td><td>凶神旺则速应衰则缓应</td></tr><tr><td>适用场景</td><td>吉事何时应验</td><td>凶事何时应验</td></tr><tr><td>交叉验证</td><td>2-3种方法一致则可靠</td><td>2-3种方法一致则可靠</td></tr></table></div><p>成功类和失败类应期的核心区别在于推定依据不同——成功类以用神为核心（吉力之源），失败类以凶神凶格为核心（凶力之源）。这一区别源于奇门遁甲的基本原理：吉事应于吉力到位之时，凶事应于凶力发动之时。</p></div>
+</div>
+
+<div class="slide" data-index="11">
+  <div class="card"><span class="tag">QM§12</span><h2>急则从神缓则从门——行动方位法则</h2><p class="para-anchored"><b class="lead">急则从神缓则从门是奇门遁甲的行动方位法则，解决“往哪个方向行动”的问题：</b></p><p class="para-anchored"><b class="lead">急则从神：</b>事态紧急时，以八神（值符）所在方位为行动方向。值符为八神之首，代表最直接的吉方。紧急情况下取值符方行动，可借神之力速达目的。急事取值符方，取其速捷刚猛之力。</p><p class="para-anchored"><b class="lead">缓则从门：</b>事态从容时，以八门（开休生三吉门）所在方位为行动方向。三吉门代表稳妥的吉方。从容情况下取吉门方行动，可借门之力稳步成事。缓事取吉门方，取其稳妥持久之力。</p><p class="para-anchored"><b class="lead">实际应用：</b>占出行、谋事、用兵等需定方位之事时，先判断事态缓急。急事从神（值符方），缓事从门（吉门方）。若值符与吉门同方，则神门合德，大吉之方，无论缓急皆可取。若值符与吉门不同方，则需根据事态缓急选择——急取值符方，缓取吉门方。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">若值符与吉门同方，神门合德大吉之方，无论缓急皆可取——这是最佳行动方位。</div></div><div class="sum-box">急事取值符方（速捷），缓事取吉门方（稳妥），同方则神门合德大吉</div></div>
+</div>
+
+<div class="slide" data-index="12">
+  <div class="card"><span class="tag">QM§12</span><h2>动静先后分主客九原则（一）</h2><p class="para-anchored"><b class="lead">动静先后分主客是奇门占断的核心步骤，九条原则从不同角度定义主客关系。</b>前五条原则：</p><p class="para-anchored"><b class="lead">第一先动为客后动为主：</b>时间维度。先采取行动的一方为客，后响应的一方为主。这是最基本的主客分判原则，适用于时间序列明确的对抗事件。</p><p class="para-anchored"><b class="lead">第二动为客静为主：</b>状态维度。主动出击者为客，静守待变者为主。这是从行为状态区分主客，适用于攻守明确的场景。</p><p class="para-anchored"><b class="lead">第三天盘客地盘主：</b>盘面维度。天盘代表客方，地盘代表主方。这是从盘面结构区分主客，是最基础的主客对应关系。</p><p class="para-anchored"><b class="lead">第四进攻客防守主：</b>攻守维度。进攻方为客，防守方为主。这是从攻防角色区分主客，适用于战争、竞争等对抗性事件。</p><p class="para-anchored"><b class="lead">第五远客近主：</b>距离维度。远来者为客，本地者为主。这是从空间距离区分主客，适用于来访者与本地者的互动场景。</p><div class="sum-box">前五条原则从时间、状态、盘面、攻守、距离五个维度分主客</div></div>
+</div>
+
+<div class="slide" data-index="13">
+  <div class="card"><span class="tag">QM§12</span><h2>动静先后分主客九原则汇总</h2><p><b class="lead">以下汇总九条主客分判原则。</b>实际占断中不需九条全用，而是根据所测之事的性质选择最合适的1-2条原则进行分判。选择原则：对抗性事件优先用攻守维度（第四条），非对抗性事件优先用内外维度（第六条）。</p><div class="grid-cards"><div class="g-card"><div class="gi">1️⃣</div><div class="gh">先动为客后动为主</div><div class="gb">时间维度：先行动者客后响应者主</div></div><div class="g-card"><div class="gi">2️⃣</div><div class="gh">动为客静为主</div><div class="gb">状态维度：主动出击客静守待变主</div></div><div class="g-card"><div class="gi">3️⃣</div><div class="gh">天盘客地盘主</div><div class="gb">盘面维度：天盘客方地盘主方</div></div><div class="g-card"><div class="gi">4️⃣</div><div class="gh">进攻客防守主</div><div class="gb">攻守维度：进攻方客防守方主</div></div><div class="g-card"><div class="gi">5️⃣</div><div class="gh">远客近主</div><div class="gb">距离维度：远来者客本地者主</div></div><div class="g-card"><div class="gi">6️⃣</div><div class="gh">外客内主</div><div class="gb">内外维度：外人客内人主</div></div><div class="g-card"><div class="gi">7️⃣</div><div class="gh">奇客仪主</div><div class="gb">奇仪维度：三奇客六仪主</div></div><div class="g-card"><div class="gi">8️⃣</div><div class="gh">旺客衰主</div><div class="gb">旺衰维度：旺方客衰方主</div></div><div class="g-card"><div class="gi">9️⃣</div><div class="gh">先声客后应主</div><div class="gb">声应维度：先发声客后响应主</div></div></div><div class="sum-box">根据所测之事性质选择最合适的1-2条原则分判主客</div></div>
+</div>
+
+<div class="slide" data-index="14">
+  <div class="card"><span class="tag">QM§15</span><h2>应期判断标准流程</h2><ol class="steps-list"><li>第一步·定吉凶：用格局判断四步法（大局→格局→用神→主客）确定所测之事的吉凶。</li><li>第二步·定应期类型：吉事用成功类应期法（8种），凶事用失败类应期法（6种）。吉凶未定则应期无法推定。</li><li>第三步·选择应期方法：根据所测之事的性质选择2-3种最合适的应期方法。优先用最直接的方法（天干地支法或庚格法）。</li><li>第四步·推定应期时间：用选定的方法分别推定应期，多种方法交叉验证。若结果一致则应期可靠，若不一致需分析原因。</li><li>第五步·判断应期远近：结合用神旺衰判断应期远近——旺则速应（日内月内），衰则缓应（年内数年）。急事应近期，缓事应远期。</li></ol><div class="sum-box">五步流程：定吉凶→定类型→选方法→推时间→判远近</div></div>
+</div>
+
+<div class="slide" data-index="15">
+  <div class="card"><span class="tag">QM§12</span><h2>核心决策原则——先分主客再定吉凶</h2><p class="para-anchored"><b class="lead">奇门占断的核心决策原则：</b>先分主客再定吉凶，主客不分则吉凶难断。这一原则贯穿所有占断类型：</p><p class="para-anchored"><b class="lead">对抗性事件（战争、竞争、博弈）：</b>必须明确主客身份，再结合五阳时利客五阴时利主判断胜负。主客身份的确定需从九条原则中选择最合适的分判方法。</p><p class="para-anchored"><b class="lead">非对抗性事件（求财、出行、婚嫁）：</b>以日干为求测人（主），以所测之事的用神为客，看主客关系定吉凶。例如占求财，日干为主，生门为客（财），看生门与日干的关系定求财吉凶。</p><p class="para-anchored"><b class="lead">应期决策：</b>先定吉凶，再定应期。吉事用成功类应期法，凶事用失败类应期法。应期远近看用神旺衰——旺则速应，衰则缓应。急事应近期（日内月内），缓事应远期（年内数年）。</p><p class="para-anchored"><b class="lead">这一核心决策原则将上节课的格局判断与本节课的应期判断串联成完整的占断流程：</b>先分主客→再定吉凶→最后定应期。三步缺一不可。</p><div class="callout blue"><div class="ci">💡</div><div class="cb">完整占断流程：先分主客→再定吉凶→最后定应期。三步缺一不可。</div></div><div class="sum-box">先分主客再定吉凶最后定应期——三步完整占断流程</div></div>
+</div>
+
+<div class="slide" data-index="16">
+  <div class="card"><span class="tag">QM§12</span><div class="quote-big"><div class="qi">❝</div><div class="qt">急则从神，缓则从门；先分主客，再定吉凶。</div><div class="qs">奇门遁甲决策总则</div></div><p><b class="lead">这条总则浓缩了奇门遁甲决策的两大核心：</b>行动方位和主客分判。急则从神缓则从门解决“往哪走”的问题，先分主客再定吉凶解决“谁胜谁负”的问题。两者结合，构成了奇门占断从判断到行动的完整决策链。</p><p><b class="lead">这条总则也体现了奇门遁甲的实用本质——它不仅是预测术，更是决策学。</b>占断的最终目的不是知道吉凶，而是知道吉凶后如何行动。急缓原则给出行动方位，主客原则给出行动策略（先动还是后动），两者合参即为完整的行动方案。</p><div class="sum-box">急缓定方位，主客定策略——占断的最终目的是指导行动</div></div>
+</div>
+
+<div class="slide" data-index="17">
+  <div class="card"><span class="tag">AI融入</span><h2>AI应期出题官提示词——生成应期判断练习题</h2><p><b class="lead">以下提示词用于让AI扮演应期出题官角色。</b>AI将根据要求生成不同类型、不同难度的应期判断练习题，每道题附标准答案和详细解析。建议课后用此提示词生成至少20道练习题，覆盖8种成功类和6种失败类应期方法。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲应期出题官。请根据以下要求生成应期判断练习题：
+
+【题目类型】成功类应期/失败类应期/庚格法/急缓原则/主客分判（随机选一种）
+【难度】初级/中级/高级
+【要求】
+1. 给出完整的奇门局信息（用神落宫、所临门星神、庚格情况等）
+2. 提出应期判断问题
+3. 附标准答案和详细解析
+4. 每次生成3道题，难度递增
+
+请确保题目信息完整、答案准确、解析清晰。</div></div>
+</div>
+
+<div class="slide" data-index="18">
+  <div class="card"><span class="tag">AI融入</span><h2>AI主客分判练习器提示词</h2><p><b class="lead">以下提示词用于让AI扮演主客分判练习器角色。</b>学员输入一个占断场景，AI将判断事件类型、给出主客分判方法、生成练习题并附标准答案。这一练习帮助学员掌握九条主客分判原则的选择和应用。</p><div class="prompt-box"><button class="copy-btn" onclick="copyP(this)">复制</button>你是奇门遁甲主客分判练习器。我将给你一个占断场景（如"占战争""占求财""占婚嫁"），请：
+1. 判断该场景属于对抗性还是非对抗性事件
+2. 给出主客分判方法（从九原则中选择最合适的）
+3. 生成一个练习题，包含局象信息和主客分判问题
+4. 附标准答案</div></div>
+</div>
+
+<div class="slide" data-index="19">
+  <div class="card"><span class="tag">课堂测验</span><h2>第7课随堂测验——应期与决策</h2><div class='quiz-q'><p><b>Q1. 成功类应期共有几种方法？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,0,0,2)'>A. 6种</div><div class='quiz-opt' onclick='reveal(this,0,1,2)'>B. 7种</div><div class='quiz-opt' onclick='reveal(this,0,2,2)'>C. 8种</div><div class='quiz-opt' onclick='reveal(this,0,3,2)'>D. 9种</div></div><div class='quiz-exp' id='exp0' style='display:none'>💡 成功类应期以用神为核心共8种：天干、地支、八门、九星、八神、日干关系、太岁关系、马星。</div></div><div class='quiz-q'><p><b>Q2. 庚临日干应期在何时？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,1,0,2)'>A. 应年</div><div class='quiz-opt' onclick='reveal(this,1,1,2)'>B. 应月</div><div class='quiz-opt' onclick='reveal(this,1,2,2)'>C. 应日</div><div class='quiz-opt' onclick='reveal(this,1,3,2)'>D. 应时</div></div><div class='quiz-exp' id='exp1' style='display:none'>💡 庚临日干应日——庚加日干主日内大凶，克应最速，是实际占断中最常用的庚格法。</div></div><div class='quiz-q'><p><b>Q3. 急则从神缓则从门中，急事取何方行动？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,2,0,1)'>A. 三吉门方</div><div class='quiz-opt' onclick='reveal(this,2,1,1)'>B. 值符方</div><div class='quiz-opt' onclick='reveal(this,2,2,1)'>C. 生门方</div><div class='quiz-opt' onclick='reveal(this,2,3,1)'>D. 天心星方</div></div><div class='quiz-exp' id='exp2' style='display:none'>💡 急则从神——事态紧急取值符（八神之首）所在方位行动，借神之力速达目的。</div></div><div class='quiz-q'><p><b>Q4. 占求财时如何分主客？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,3,0,1)'>A. 天盘为客地盘为主</div><div class='quiz-opt' onclick='reveal(this,3,1,1)'>B. 日干为主生门为客</div><div class='quiz-opt' onclick='reveal(this,3,2,1)'>C. 远为客近为主</div><div class='quiz-opt' onclick='reveal(this,3,3,1)'>D. 旺为客衰为主</div></div><div class='quiz-exp' id='exp3' style='display:none'>💡 非对抗性事件以日干为求测人（主），以所测之事的用神为客。占求财日干为主生门（财）为客。</div></div><div class='quiz-q'><p><b>Q5. 以下哪个属于失败类应期方法？</b></p><div class='quiz-opts'><div class='quiz-opt' onclick='reveal(this,4,0,2)'>A. 以用神所临天干定应期</div><div class='quiz-opt' onclick='reveal(this,4,1,2)'>B. 以所临马星定应期</div><div class='quiz-opt' onclick='reveal(this,4,2,2)'>C. 以空亡定应期</div><div class='quiz-opt' onclick='reveal(this,4,3,2)'>D. 以与太岁关系定应期</div></div><div class='quiz-exp' id='exp4' style='display:none'>💡 以空亡定应期属于失败类6种之一（旬空之支定应期）。其余三项都是成功类应期方法。</div></div></div>
+</div>
+
+<div class="slide" data-index="20">
+  <div class="card"><span class="tag">课堂讨论</span><h2>实战思考——应期判断的交叉验证</h2><p>本课核心训练点是应期判断的交叉验证思维。单一方法推定的应期可能存在偏差，多种方法交叉验证才能提高应期判断的可靠性。以下讨论题引导学员深入思考交叉验证的方法和意义。</p><p>讨论时建议使用AI出题官角色：先让AI生成一道包含完整局象信息的应期判断题，然后学员用2-3种不同方法分别推定应期，对比结果是否一致。若不一致，分析原因——是方法选择不当，还是局象信息有特殊之处。</p><div class="disc-wall"><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">一局中用神临丙落午，同时庚临日干。若占求财为吉事，应期如何推定？用成功类还是失败类方法？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">事态紧急需速决，但值符方与吉门方不同。如何选择行动方位？若选择值符方有何风险？</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">用AI出题官生成3道庚格法应期题，分别对应破获类、找寻类、阻止类，完成练习并验证答案。</div></div><div class="disc-q"><div class="dq-mark">Q</div><div class="dq-txt">占找寻失物，庚临月干但用神落空亡。应期应取月内还是取空亡之支？如何交叉验证？</div></div></div><p class="hl">多种应期方法交叉验证，结果一致则可靠，不一致需分析原因</p></div>
+</div>
+
+<div class="slide" data-index="21">
+  <div class="card"><span class="tag">本课总结</span><h2>第7课总结——应期推演能力构建</h2><ul class="steps-list"><li>成功类应期8种：天干/地支/八门/九星/八神/日干关系/太岁关系/马星，以用神为核心</li><li>失败类应期6种：庚格/凶门/凶星/凶神/空亡/冲克，以凶神凶格为核心</li><li>庚格法3种：破获类（庚临年干应年）/找寻类（庚临月干应月）/阻止类（庚临日干应日）</li><li>急则从神缓则从门：急事取值符方速捷，缓事取吉门方稳妥，同方则神门合德大吉</li><li>动静先后分主客九原则：从时间/状态/盘面/攻守/距离/内外/奇仪/旺衰/声应九维度分判</li><li>核心决策：先分主客→再定吉凶→最后定应期，三步完整占断流程</li><li>AI出题官：生成应期判断练习题，通过大量练习巩固应期推演能力</li></ul><div class="sum-box">吉事用成功类8种，凶事用失败类6种，交叉验证提高可靠性</div><div class="sum-box"><b>🔗 下节预告：</b>下节预告：第8课·奇门终身局与四柱合参——将格局判断和应期推演应用于人生命运预测</div><p style='margin-top:10px;font-size:15px;color:#5b6b82'>应期推演能力 → 第8课输入：终身局分析的应期方法</p></div>
+</div>
+</div>
+<button class="side" id="prevBtn" onclick="nav(-1)">‹</button>
+<button class="side" id="nextBtn" onclick="nav(1)">›</button>
+<button id="teacherBtn" onclick="tpToggle()">👨🏫<br>教师模式</button>
+<button id="aiBtn" onclick="aiTogglePanel()" title="AI 助教">💬</button>
+<canvas id="tpAnnoCanvas"></canvas>
+<div id="teleprompter"></div>
+<div class="nav">
+  <button onclick="nav(-1)" id="navPrev">上一页</button>
+  <div class="dots" id="dots"></div>
+  <span class="pageno" id="pageno"></span>
+  <button onclick="nav(1)" id="navNext">下一页</button>
+</div>
+<script>
+var SCRIPT={"pages":[{"idx": 0, "title": "封面", "text": "各位学员好，欢迎来到第7课。上节课我们学会了判断吉凶格局，但吉凶何时应验？是应年、应月、应日还是应时？这就是今天要解决的\"定应期\"问题。本课主题是\"主客动静断应验\"，我们将系统学习成功类应期8种方法和失败类应期6种方法，以及最重要的庚格法定应期。本课的AI角色是\"出题官\"，它将根据大家的需求自动生成应期判断练习题，附标准答案和详细解析。应期判断是奇门占断中最需要实战练习的技能，仅靠理论理解远远不够，必须通过大量案例练习才能熟练掌握。本课产出应期推演能力，是第8课终身局分析的应期方法。让我们开始。\n\n---"}, {"idx": 1, "title": "本课导览", "text": "先看本课导览。本课有四个核心目标：第一，掌握成功类应期8种方法，能从天干、地支、八门、九星、八神、日干关系、太岁关系、马星等8个维度推定应验时间；第二，掌握失败类应期6种方法；第三，熟练运用庚格法3种；第四，理解急缓原则与动静主客九原则。AI出题官角色的核心价值在于提供大量练习机会。应期判断是最需要实战练习的技能——仅靠理论理解远远不够，必须通过大量案例练习才能熟练掌握。出题官角色让AI根据学员需求自动生成不同类型、不同难度的应期判断练习题，实现\"千人千面\"的个性化训练。语料来源是QM§12主客动静决策、QM§15定应期方法。\n\n---"}, {"idx": 2, "title": "应期概念导入", "text": "我们先理解应期的基本概念。应期是奇门遁甲占断中\"定时间\"的核心环节。格局判断解决\"吉凶\"问题，应期判断解决\"何时\"问题。一局断出吉凶后，必须推定吉凶应验的具体时间——是应年、应月、应日还是应时？是近期还是远期？应期判断分两大类：成功类应期推定吉事何时应验，以用神为核心从8个维度推定。失败类应期推定凶事何时应验，以凶神凶格为核心从6个维度推定。两类应期的推定方法截然不同——这是本课最重要的区分点，大家常犯的错误就是混淆两类应期方法。基本流程是：第一步先定吉凶，第二步定应期类型，第三步选择具体方法，第四步判断应期远近——旺则速应，衰则缓应。\n\n---"}, {"idx": 3, "title": "成功类应期（一）", "text": "现在逐一讲解成功类应期的8种方法。前四种以用神所临的盘面元素为依据。第一种以用神所临天干定应期：用神所临天干为应期之干。如用神临丙，则应丙日或丙月。这是最直接的应期推定法。第二种以用神所落地支定应期：用神所落地支为应期之支。如用神落午，则应午日或午月。与天干法配合使用，天干定干、地支定支，合为具体的干支时间。第三种以用神所临八门定应期：用神所临八门的五行属性和本宫地支定应期。如临开门（乾金），应戌亥之日。第四种以用神所临九星定应期：如临天心星（乾金），应戌亥之日。前四种方法都是从用神所临的盘面元素直接推定，是最基础最常用的成功类应期方法。\n\n---"}, {"idx": 4, "title": "成功类应期（二）", "text": "后四种成功类应期方法以用神的关系维度为依据。第五种以用神所临八神定应期：如临值符（土神），应辰戌丑未之日。第六种以用神与日干关系定应期远近：用神生日干应期近，日干生用神应期远。此法定应期远近而非具体时间。第七种以用神与太岁关系定年度应期：用神与太岁相合应本年，相冲应次年。此法适用于跨年度的长期事件。第八种以用神所临马星定应期：马星主变动速至，应期较快。驿马星的查法：申子辰马在寅、亥卯未马在巳、寅午戌马在申、巳酉丑马在亥。马星法适用于以变动、出行为主的占断。后四种方法从用神的关系维度推定，作为前四种方法的补充和验证。\n\n---"}, {"idx": 5, "title": "成功类应期8种汇总", "text": "这张卡片汇总了成功类应期的8种方法。第一种天干定应期，第二种地支定应期，第三种八门定应期，第四种九星定应期，第五种八神定应期，第六种日干关系定远近，第七种太岁关系定年度，第八种马星定应期。实际占断中不必8种全用，通常选择2-3种最合适的方法交叉验证。选择原则：以用神所临元素为主、关系维度为辅。若多种方法推定的应期一致，则应期判断更为可靠。比如用神临丙落午，天干法推定应丙日，地支法推定应午日，两种方法可以交叉验证。如果同时临马星，马星法提示应期较快，则可能应丙午之日的近期。这种交叉验证是提高应期判断准确性的关键方法。\n\n---"}, {"idx": 6, "title": "失败类应期（一）", "text": "现在讲解失败类应期的6种方法。前三种以凶神凶格的落宫为依据。第一种以庚格定应期：庚为阻碍失败之神。庚临年干应年、庚临月干应月、庚临日干应日。庚格法是失败类应期最常用的方法，因庚金主肃杀阻碍，庚加临何干即凶事应于该干所代表的时间层级。第二种以凶门定应期：死门、惊门、伤门落宫地支定应期。如死门落坎一宫，坎主子，应子日。第三种以凶星定应期：天蓬星（大凶）、天芮星（病神）落宫地支定应期。如天芮落坤二宫，坤主未申，应未申之日。前三种方法都是从凶神凶格的落宫直接推定，与成功类应期的前四种方法形成对称——成功类以用神落宫推定，失败类以凶神落宫推定。\n\n---"}, {"idx": 7, "title": "失败类应期（二）", "text": "后三种失败类应期方法以凶神和用神的冲克关系为依据。第四种以凶神定应期：白虎（刑伤）、玄武（盗贼）落宫地支定应期。如白虎落震三宫，震主卯，应卯日。第五种以空亡定应期：旬空之支定应期。空亡主力量虚耗，凶事应于空亡之支对应的时间。如甲子旬空戌亥，凶事应戌亥之日。空亡法的原理是：空亡之地力量虚耗，凶事乘虚而入。第六种以冲克定应期：冲用神之支定应期。用神被冲克之时为凶事应验之期。如用神落午，子冲午，应子日。冲克法的原理是：用神被冲克则吉力受损，凶事乘冲克之机而应。后三种方法作为前三种的补充验证，尤其空亡法和冲克法在特定场景下非常有效。\n\n---"}, {"idx": 8, "title": "失败类应期6种汇总", "text": "这张卡片汇总了失败类应期的6种方法。第一种庚格定应期，第二种凶门定应期，第三种凶星定应期，第四种凶神定应期，第五种空亡定应期，第六种冲克定应期。与成功类应期一样，实际占断中通常选择2-3种最合适的方法交叉验证。选择原则：优先用庚格法（最常用最可靠），辅以凶门凶星法，空亡冲克法作为补充验证。比如占病（凶事），天芮落坤二宫主未申之日应病，若同时庚临日干则日内应病凶，两种方法交叉验证。如果用神又落空亡，则空亡之支也可能是应期。三种方法对比分析，选择最合理的推定结果。\n\n---"}, {"idx": 9, "title": "庚格法3种", "text": "庚格法是失败类应期中最重要最常用的方法，分三种应用场景。破获类：庚临年干应年，占破案、捕获、找寻等事，主年内破获。此法适用于跨年度的长期案件。庚临年干影响范围最广，但应期最慢。找寻类：庚临月干应月，占找寻人物，主月内找到。此法适用于中期找寻。阻止类：庚临日干应日，占阻止、拦截等事，主日内阻止。此法适用于短期阻止。庚临日干因克应迅速最为常用，是实际占断中最高频使用的庚格法。庚格法的核心原理：庚为阻碍肃杀之神，庚加临何干，凶事即应于该干所代表的时间层级。庚临年干应年最慢，庚临日干应日最快。选择哪种庚格法取决于所测之事的时间跨度和庚在局中的加临情况。\n\n---"}, {"idx": 10, "title": "成功类与失败类应期对比", "text": "这张对比表展示成功类和失败类应期的核心区别。推定核心不同：成功类以用神为核心（吉力之源），失败类以凶神凶格为核心（凶力之源）。方法数量不同：成功类8种，失败类6种。主要方法不同：成功类以天干、地支、八门、九星为主，失败类以庚格、凶门、凶星、凶神为主。远近判断不同：成功类用神旺则速应衰则缓应，失败类凶神旺则速应衰则缓应。适用场景不同：成功类用于吉事何时应验，失败类用于凶事何时应验。但两者都有交叉验证的方法——2-3种方法一致则可靠。这一区别源于奇门遁甲的基本原理：吉事应于吉力到位之时，凶事应于凶力发动之时。大家一定要牢记这个区别，不可混用两类方法。\n\n---"}, {"idx": 11, "title": "急则从神缓则从门", "text": "现在讲解行动方位法则——急则从神缓则从门。这解决\"往哪个方向行动\"的问题。急则从神：事态紧急时，以八神（值符）所在方位为行动方向。值符为八神之首，代表最直接的吉方。紧急情况下取值符方行动，可借神之力速达目的。急事取值符方，取其速捷刚猛之力。缓则从门：事态从容时，以八门（开休生三吉门）所在方位为行动方向。三吉门代表稳妥的吉方。从容情况下取吉门方行动，可借门之力稳步成事。缓事取吉门方，取其稳妥持久之力。实际应用时先判断事态缓急。若值符与吉门同方，则神门合德，大吉之方，无论缓急皆可取——这是最佳行动方位。若不同方，则急取值符方，缓取吉门方。\n\n---"}, {"idx": 12, "title": "动静先后分主客九原则（一）", "text": "动静先后分主客是奇门占断的核心步骤，九条原则从不同角度定义主客关系。前五条原则：第一先动为客后动为主，时间维度，先采取行动的一方为客，后响应的一方为主。第二动为客静为主，状态维度，主动出击者为客，静守待变者为主。第三天盘客地盘主，盘面维度，天盘代表客方，地盘代表主方。第四进攻客防守主，攻守维度，进攻方为客，防守方为主。第五远客近主，距离维度，远来者为客，本地者为主。这五条原则从时间、状态、盘面、攻守、距离五个维度分主客，实际占断中根据所测之事的性质选择最合适的维度进行分判。\n\n---"}, {"idx": 13, "title": "动静先后分主客九原则汇总", "text": "这张卡片汇总了九条主客分判原则。第六外客内主，内外维度，外人为客内人为主。第七奇客仪主，奇仪维度，三奇为客六仪为主。第八旺客衰主，旺衰维度，旺方为客衰方为主。第九先声客后应主，声应维度，先发声者为客后响应者为主。实际占断中不需九条全用，而是根据所测之事的性质选择最合适的1-2条原则进行分判。选择原则：对抗性事件优先用攻守维度（第四条），非对抗性事件优先用内外维度（第六条）。比如占战争，用第四条进攻客防守主分判；占求财，用第六条外客内主分判——日干为内人（主），生门为外人（客）。掌握九条原则的选择和应用是主客分判的关键能力。\n\n---"}, {"idx": 14, "title": "应期判断标准流程", "text": "我们用流程图展示应期判断的标准操作程序。第一步定吉凶：用格局判断四步法（大局到格局到用神到主客）确定所测之事的吉凶。第二步定应期类型：吉事用成功类应期法8种，凶事用失败类应期法6种。吉凶未定则应期无法推定。第三步选择应期方法：根据所测之事的性质选择2-3种最合适的应期方法。优先用最直接的方法（天干地支法或庚格法）。第四步推定应期时间：用选定的方法分别推定应期，多种方法交叉验证。若结果一致则应期可靠，若不一致需分析原因。第五步判断应期远近：结合用神旺衰判断应期远近——旺则速应（日内月内），衰则缓应（年内数年）。急事应近期，缓事应远期。五步流程必须严格按序执行，不可跳步。\n\n---"}, {"idx": 15, "title": "核心决策原则", "text": "奇门占断的核心决策原则：先分主客再定吉凶，主客不分则吉凶难断。这一原则贯穿所有占断类型。对抗性事件（战争、竞争、博弈）：必须明确主客身份，再结合五阳时利客五阴时利主判断胜负。非对抗性事件（求财、出行、婚嫁）：以日干为求测人（主），以所测之事的用神为客。比如占求财，日干为主，生门为客（财），看生门与日干的关系定求财吉凶。应期决策：先定吉凶，再定应期。吉事用成功类应期法，凶事用失败类应期法。应期远近看用神旺衰——旺则速应，衰则缓应。这一核心决策原则将上节课的格局判断与本节课的应期判断串联成完整的占断流程：先分主客到再定吉凶到最后定应期。三步缺一不可。\n\n---"}, {"idx": 16, "title": "决策金句", "text": "这条金句浓缩了奇门遁甲决策的两大核心：\"急则从神，缓则从门；先分主客，再定吉凶。\"急则从神缓则从门解决\"往哪走\"的问题，先分主客再定吉凶解决\"谁胜谁负\"的问题。两者结合，构成了奇门占断从判断到行动的完整决策链。这条总则也体现了奇门遁甲的实用本质——它不仅是预测术，更是决策学。占断的最终目的不是知道吉凶，而是知道吉凶后如何行动。急缓原则给出行动方位，主客原则给出行动策略（先动还是后动），两者合参即为完整的行动方案。这也是奇门遁甲被称为\"帝王之学\"的原因——它提供的是决策方法论，而非简单的吉凶预测。\n\n---"}, {"idx": 17, "title": "AI应期出题官提示词", "text": "现在进入AI融入环节。这是AI应期出题官的提示词。使用方法是：AI将根据要求生成不同类型、不同难度的应期判断练习题，每次生成3道题，难度递增。每道题包含完整的奇门局信息（用神落宫、所临门星神、庚格情况等），提出应期判断问题，附标准答案和详细解析。题目类型覆盖成功类应期、失败类应期、庚格法、急缓原则、主客分判。建议大家课后用此提示词生成至少20道练习题，覆盖8种成功类和6种失败类应期方法。练习时先自己推定应期，再对照AI给出的标准答案，分析差异原因。这种\"先练后对\"的学习方法是掌握应期判断的最有效途径。\n\n---"}, {"idx": 18, "title": "AI主客分判练习器提示词", "text": "第二个AI提示词是主客分判练习器。大家输入一个占断场景，比如\"占战争\"\"占求财\"\"占婚嫁\"，AI将判断该场景属于对抗性还是非对抗性事件，给出主客分判方法（从九原则中选择最合适的），生成一个练习题并附标准答案。这个练习帮助大家掌握九条主客分判原则的选择和应用。建议结合第13、14页的九原则内容一起练习，先自己判断主客分判方法，再用AI验证。特别关注对抗性事件和非对抗性事件的主客分判差异——对抗性事件优先用攻守维度，非对抗性事件优先用内外维度。这种分类训练有助于建立主客分判的系统思维。\n\n---"}, {"idx": 19, "title": "课堂测验", "text": "现在进行随堂测验。第一题：成功类应期共有几种方法？答案是8种。成功类应期以用神为核心共8种：天干、地支、八门、九星、八神、日干关系、太岁关系、马星。第二题：庚临日干应期在何时？答案是应日。庚临日干主日内大凶，克应最速，是实际占断中最常用的庚格法。第三题：急则从神缓则从门中，急事取何方行动？答案是值符方。急事取值符（八神之首）所在方位行动，借神之力速达目的。第四题：占求财时如何分主客？答案是日干为主生门为客。非对抗性事件以日干为求测人（主），以所测之事的用神为客。第五题：以下哪个属于失败类应期方法？答案是以空亡定应期。大家答对了几题？\n\n---"}, {"idx": 20, "title": "课堂讨论", "text": "进入课堂讨论环节。四道讨论题。第一题：一局中用神临丙落午，同时庚临日干。若占求财为吉事，应期如何推定？提示：吉事用成功类法，以用神为核心，不用庚格法。庚临日干可能是其他凶事的应期信号。第二题：事态紧急需速决，但值符方与吉门方不同。如何选择？提示：急取值符方，但需注意值符方是否犯凶格。第三题：用AI出题官生成3道庚格法应期题，分别对应破获类、找寻类、阻止类，完成练习并验证答案。第四题：占找寻失物，庚临月干但用神落空亡。应期应取月内还是取空亡之支？提示：交叉验证——庚临月干应月内找到，空亡主力量虚耗可能找不到，需综合判断。这些讨论题的核心训练点是交叉验证思维。\n\n---"}, {"idx": 21, "title": "本课总结", "text": "最后总结本课核心内容。第一，成功类应期8种：天干、地支、八门、九星、八神、日干关系、太岁关系、马星，以用神为核心。第二，失败类应期6种：庚格、凶门、凶星、凶神、空亡、冲克，以凶神凶格为核心。第三，庚格法3种：破获类庚临年干应年、找寻类庚临月干应月、阻止类庚临日干应日。第四，急则从神缓则从门：急事取值符方速捷，缓事取吉门方稳妥，同方则神门合德大吉。第五，动静先后分主客九原则：从时间、状态、盘面、攻守、距离、内外、奇仪、旺衰、声应九维度分判。第六，核心决策：先分主客到再定吉凶到最后定应期，三步完整占断流程。第七，AI出题官：生成应期判断练习题，通过大量练习巩固应期推演能力。核心要点：吉事用成功类8种，凶事用失败类6种，交叉验证提高可靠性。下节课预告：第8课奇门终身局与四柱合参——将格局判断和应期推演应用于人生命运预测。本课产出应期推演能力，是第8课终身局分析的应期方法。课后请大家用AI出题官生成至少20道应期判断练习题并完成练习。下课。"}]};
+(function(){
+window.SCRIPT=SCRIPT;
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dots=document.getElementById('dots');
+slides.forEach(function(s,i){
+  var d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=function(){go(i)};
+  dots.appendChild(d);
+});
+window.nav=function(dir){go(cur+dir)};
+window.go=function(i){
+  if(window.__tpSpeaking){window.tpStop()}
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('active');
+  cur=i;slides[cur].classList.add('active');
+  [].slice.call(dots.children).forEach(function(d,j){d.className='dot'+(j===cur?' on':'')});
+  document.getElementById('pageno').textContent=(cur+1)+' / '+slides.length;
+  if(window.tpOn)tpUpdate(cur);
+  document.getElementById('navPrev').disabled=cur===0;
+  document.getElementById('prevBtn').disabled=cur===0;
+  document.getElementById('navNext').disabled=cur===slides.length-1;
+  document.getElementById('nextBtn').disabled=cur===slides.length-1;
+};
+window.reveal=function(opt,qi,oi,ans){
+  var exp=document.getElementById('exp'+qi);
+  exp.style.display='block';
+  if(oi===ans){opt.classList.add('correct');opt.textContent=opt.textContent+' ✓'}
+  else{opt.classList.add('wrong');opt.textContent=opt.textContent+' ✗';
+    var sibs=opt.parentElement.children;
+    if(sibs[ans]){sibs[ans].classList.add('correct');sibs[ans].textContent=sibs[ans].textContent+' ✓'}}
+  [].slice.call(opt.parentElement.children).forEach(function(o){o.onclick=null});
+};
+window.tpOn=false;
+window.tpToggle=function(){
+  window.tpOn=!window.tpOn;
+  var tp=document.getElementById('teleprompter');
+  tp.style.display=window.tpOn?'block':'none';
+  if(window.tpOn){tpUpdate(curSlideIdx())}else{window.tpStop&&window.tpStop()}
+};
+window.curSlideIdx=function(){
+  var s=document.querySelector('.slide.active');
+  return s?parseInt(s.getAttribute('data-index')):0;
+};
+window.tpUpdate=function(idx){
+  var tp=document.getElementById('teleprompter');
+  if(!tp||!window.tpOn)return;
+  var p=(window.SCRIPT&&window.SCRIPT.pages||[]).find(function(x){return x.idx===idx})||null;
+  var title=p?p.title:'（自由发挥）';
+  var text=p?p.text:'本页无讲稿，自由发挥。';
+  tp.innerHTML='<div class="tp-head">📜 讲稿提词 <span class="tp-title">'+title+'</span>'
+    +'<button id="tpSpeakBtn" onclick="tpSpeak()">🔊 朗读</button>'
+    +'<button onclick="tpAnno()">🖊 标注</button>'
+    +'<button onclick="tpAnnoClear()">🗑 清空</button>'
+    +'<span style="color:#94a3b8">按 T 键或点此关闭</span>'
+    +'<button style="margin-left:auto" onclick="tpToggle()">✕</button></div>'
+    +'<div class="tp-text">'+text+'</div>';
+};
+window.__tpSpeaking=false;
+window.__pickVoice=function(){
+  var vs=speechSynthesis.getVoices();
+  if(!vs.length)return null;
+  var zh=vs.filter(function(v){return /^zh/i.test(v.lang)});
+  if(!zh.length)return null;
+  var g=zh.filter(function(v){return /google/i.test(v.name)});
+  if(g.length)return g[0];
+  var pref=zh.filter(function(v){return /婷婷|语舒|Xiaoxiao|Yunxi|Yaoyao|Kangkang|Ting.?Ting|Mei.?Jia/i.test(v.name)});
+  if(pref.length)return pref[0];
+  return zh[0];
+};
+window.tpSpeak=function(){
+  if(!('speechSynthesis' in window))return;
+  var btn=document.getElementById('tpSpeakBtn');
+  if(window.__tpSpeaking){window.tpStop();return}
+  var tp=document.getElementById('teleprompter');
+  var t=tp.querySelector('.tp-text');
+  if(!t)return;
+  speechSynthesis.cancel();
+  var voice=window.__pickVoice();
+  var full=t.textContent.trim();
+  var sents=full.replace(/([。！？；])/g,'$1').split('').map(function(s){return s.trim()}).filter(Boolean);
+  if(!sents.length)sents=[full];
+  window.__tpSpeaking=true;
+  if(btn){btn.innerHTML='⏹ 停止';btn.style.background='#fde8ea';btn.style.color='#8a1226';btn.style.borderColor='#f0b9c0'}
+  var idx=0;
+  var next=function(){
+    if(!window.__tpSpeaking||idx>=sents.length){window.tpStop();return}
+    var u=new SpeechSynthesisUtterance(sents[idx]);
+    u.lang='zh-CN';u.rate=0.92;u.pitch=1.0;u.volume=1.0;
+    if(voice)u.voice=voice;
+    u.onend=function(){idx++;setTimeout(next,180)};
+    u.onerror=function(){idx++;setTimeout(next,80)};
+    speechSynthesis.speak(u);
+  };
+  next();
+};
+window.tpStop=function(){
+  window.__tpSpeaking=false;
+  speechSynthesis.cancel();
+  var btn=document.getElementById('tpSpeakBtn');
+  if(btn){btn.innerHTML='🔊 朗读';btn.style.background='';btn.style.color='';btn.style.borderColor=''}
+};
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=function(){};}
+window.tpAnno=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  var on=cv.style.display==='block';
+  cv.style.display=on?'none':'block';
+  if(!on&&!cv.__init){
+    cv.__init=true;cv.width=innerWidth;cv.height=innerHeight;
+    var ctx=cv.getContext('2d');var drawing=false;var last=null;
+    cv.onmousedown=function(e){drawing=true;last=[e.clientX,e.clientY]};
+    cv.onmousemove=function(e){if(!drawing)return;
+      ctx.strokeStyle='#CF0A2C';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(e.clientX,e.clientY);ctx.stroke();
+      last=[e.clientX,e.clientY]};
+    cv.onmouseup=function(){drawing=false};
+  }
+};
+window.tpAnnoClear=function(){
+  var cv=document.getElementById('tpAnnoCanvas');
+  if(cv.getContext)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+};
+window.aiPanelOpen=false;
+window.aiTogglePanel=function(){
+  var old=document.getElementById('aiPanel');
+  if(old){old.remove();window.aiPanelOpen=false;return}
+  var d=document.createElement('div');
+  d.id='aiPanel';
+  d.style.cssText='position:fixed;right:20px;bottom:196px;width:300px;background:#fff;border:1.5px solid #b9d2f2;border-radius:14px;padding:14px;z-index:180;box-shadow:0 8px 28px rgba(30,80,160,.18)';
+  d.innerHTML='<div style="font-weight:650;color:#1a2c5e;font-size:14px;margin-bottom:8px">💬 AI 助教 <span style="float:right;cursor:pointer;color:#94a3b8" onclick="aiTogglePanel()">✕</span></div>'
+    +'<div style="font-size:12.5px;color:#5b6b82;margin-bottom:10px">结合本课内容提问（学生课后答疑用）</div>'
+    +'<textarea id="aiQ" style="width:100%;height:56px;border:1px solid #d5e3f8;border-radius:8px;padding:8px;font-size:13px;font-family:inherit" placeholder="例如：为什么 1mol 水的分子数和氢原子数不一样？"></textarea>'
+    +'<button onclick="aiAsk()" style="margin-top:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit">提问</button>'
+    +'<div id="aiA" style="font-size:13px;color:#2d3a55;margin-top:10px;display:none;line-height:1.7"></div>';
+  document.body.appendChild(d);
+  window.aiPanelOpen=true;
+};
+window.aiAsk=function(){
+  var q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  var a=document.getElementById('aiA');
+  a.style.display='block';
+  a.textContent='🤔 思考中…（联网环境接 zhike-proxy /api/chat；离线课件请配合 AI 开发者空间使用）';
+};
+window.copyP=function(btn){
+  var txt=btn.parentElement.textContent.replace(/^复制.*?(?=我)/s,'').replace(/^复制/,'').trim();
+  function done(){btn.textContent='已复制 ✓';setTimeout(function(){btn.textContent='复制'},1500)}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(function(){fb()})}else{fb()}
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(ta)}
+};
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '||e.key==='PageDown'){e.preventDefault();nav(1)}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();nav(-1)}
+  if(e.key==='Home'){go(0)}if(e.key==='End'){go(slides.length-1)}
+  if(e.key==='t'||e.key==='T'){tpToggle()}
+});
+var sx=0,sy=0;
+document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY});
+document.addEventListener('touchend',function(e){
+  var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)){nav(dx<0?1:-1)}
+});
+var lock=false;
+document.addEventListener('wheel',function(e){if(lock)return;lock=true;setTimeout(function(){lock=false},600);nav(e.deltaY>0?1:-1)},{passive:true});
+go(0);
+})();
+</script>
+</body>
+</html>
